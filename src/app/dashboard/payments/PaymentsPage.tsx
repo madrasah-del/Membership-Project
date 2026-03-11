@@ -182,7 +182,13 @@ export default function PaymentsPage({
                         <div className="p-6 overflow-y-auto">
                             <SumUpCheckoutWidget
                                 checkoutId={updateCheckoutId}
-                                onSuccess={handleUpdateSuccess}
+                                onComplete={(status) => {
+                                    if (status === 'SUCCESS') {
+                                        handleUpdateSuccess()
+                                    } else {
+                                        setUpdateCheckoutId(null)
+                                    }
+                                }}
                             />
                         </div>
                     </div>

@@ -103,7 +103,7 @@ export default function ApplicationForm({
                     body: JSON.stringify({
                         amount: result.amount,
                         membershipId: result.membershipId,
-                        email: addressDetails.email,
+                        email: personalDetails.email,
                         name: result.applicantName,
                         isRecurring: finalPaymentData.isRecurring // Add this flag
                     })

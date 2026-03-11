@@ -39,7 +39,8 @@ export default async function Page() {
 
     let activeInstrument = null
     if (membership?.id && hasActiveSubscription) {
-        activeInstrument = await getActivePaymentInstrument(membership.id)
+        const result = await getActivePaymentInstrument(membership.id)
+        activeInstrument = result.instrument || null
     }
 
     return (

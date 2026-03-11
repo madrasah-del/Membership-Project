@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server'
+export const dynamic = 'force-dynamic'
 import { createClient } from '@supabase/supabase-js'
 
-// This creates a service role client to bypass RLS for background jobs
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const SUMUP_API_BASE = 'https://api.sumup.com/v0.1'
 
 export async function GET(request: Request) {
+    // This creates a service role client to bypass RLS for background jobs
+    const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
     // 1. Verify Vercel Cron Secret (or allow manual testing locally)
     const authHeader = request.headers.get('authorization')
     if (
