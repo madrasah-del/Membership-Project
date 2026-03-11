@@ -6,13 +6,13 @@ import { revalidatePath } from 'next/cache'
 export async function markAsRead(formData: FormData) {
     const notificationId = formData.get('notification_id') as string
 
-    if (!notificationId) return { error: 'Missing notification ID' }
+    if (!notificationId) return
 
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return { error: 'Not authorized' }
+    if (!user) return
 
     const { error } = await supabase
         .from('member_notifications')
@@ -22,9 +22,8 @@ export async function markAsRead(formData: FormData) {
 
     if (error) {
         console.error('Failed to mark notification as read:', error)
-        return { error: 'Failed to mark as read' }
+        return
     }
 
     revalidatePath('/dashboard/notifications')
-    return { success: true }
 }
