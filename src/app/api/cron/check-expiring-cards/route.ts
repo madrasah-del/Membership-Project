@@ -163,6 +163,6 @@ async function sendExpiryEmail(email: string, firstName: string, last4: string, 
 
     if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(\`Failed to send email: \${JSON.stringify(errorData)}\`);
+        throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
     }
 }
