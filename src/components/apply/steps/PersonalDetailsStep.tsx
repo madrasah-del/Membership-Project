@@ -81,17 +81,53 @@ export function PersonalDetailsStep({ initialData, onNext }: Props) {
                 </div>
 
                 <div className="space-y-1 md:col-span-2">
-                    <label className="text-sm font-medium text-slate-700 pl-1">Marital Status (Optional)</label>
+                    <label className="text-sm font-medium text-slate-700 pl-1">Email Address *</label>
+                    <input
+                        type="email"
+                        {...register('email')}
+                        className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all ${errors.email ? 'border-red-300' : 'border-slate-200'}`}
+                        placeholder="you@example.com"
+                    />
+                    {errors.email && <p className="text-red-500 text-xs mt-1 pl-1">{errors.email.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-sm font-medium text-slate-700 pl-1">Profession *</label>
                     <select
-                        {...register('maritalStatus')}
-                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all appearance-none"
+                        {...register('profession')}
+                        className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all appearance-none ${errors.profession ? 'border-red-300' : 'border-slate-200'}`}
                     >
-                        <option value="">Select status</option>
-                        <option value="Single">Single</option>
-                        <option value="Married">Married</option>
-                        <option value="Divorced">Divorced</option>
-                        <option value="Widowed">Widowed</option>
+                        <option value="">Select profession</option>
+                        <option value="Accounting/Finance">Accounting/Finance</option>
+                        <option value="Administrative/Clerical">Administrative/Clerical</option>
+                        <option value="Business/Management">Business/Management</option>
+                        <option value="Construction/Trades">Construction/Trades</option>
+                        <option value="Creative/Design/Media">Creative/Design/Media</option>
+                        <option value="Education/Teaching">Education/Teaching</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Healthcare/Medicine">Healthcare/Medicine</option>
+                        <option value="IT/Technology/Software">IT/Technology/Software</option>
+                        <option value="Legal">Legal</option>
+                        <option value="Logistics/Transport">Logistics/Transport</option>
+                        <option value="Marketing/Sales">Marketing/Sales</option>
+                        <option value="Public Service/Non-Profit">Public Service/Non-Profit</option>
+                        <option value="Retail/Wholesale">Retail/Wholesale</option>
+                        <option value="Student">Student</option>
+                        <option value="Retired">Retired</option>
+                        <option value="Unemployed">Unemployed</option>
+                        <option value="Other">Other</option>
                     </select>
+                    {errors.profession && <p className="text-red-500 text-xs mt-1 pl-1">{errors.profession.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-sm font-medium text-slate-700 pl-1">Position *</label>
+                    <input
+                        {...register('position')}
+                        className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all ${errors.position ? 'border-red-300' : 'border-slate-200'}`}
+                        placeholder="e.g. Senior Manager, Teacher, Consultant"
+                    />
+                    {errors.position && <p className="text-red-500 text-xs mt-1 pl-1">{errors.position.message}</p>}
                 </div>
             </div>
 

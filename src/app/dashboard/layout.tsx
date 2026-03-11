@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LogOut, User, Settings, FileText, ChevronRight } from 'lucide-react'
+import { LogOut, User, Settings, FileText, ChevronRight, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 import { signout } from '@/app/login/actions'
 
@@ -44,6 +44,11 @@ export default async function DashboardLayout({
                     <Link href="/dashboard/membership" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
                         <FileText className="w-5 h-5 text-slate-400" />
                         My Membership
+                    </Link>
+
+                    <Link href="/dashboard/payments" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
+                        <CreditCard className="w-5 h-5 text-slate-400" />
+                        Payments & Subscriptions
                     </Link>
 
                     <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">

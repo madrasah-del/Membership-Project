@@ -11,6 +11,7 @@ import { PhotoUploadStep } from './steps/PhotoUploadStep'
 import { DependentsStep } from './steps/DependentsStep'
 import { EligibilityStep } from './steps/EligibilityStep'
 import PaymentSetupStep, { PaymentSetupData } from './steps/PaymentSetupStep'
+import SumUpCheckoutWidget from './steps/SumUpCheckoutWidget'
 
 // Actions and Validations
 import { submitApplication } from '@/app/apply/actions'
@@ -25,14 +26,24 @@ const STEPS = [
     { id: 'payment', title: 'Payment Setup' },
 ]
 
-export default function ApplicationForm({ membershipFee = 10.00 }: { membershipFee?: number }) {
+export default function ApplicationForm({
+    membershipFee = 10.00,
+    initialPersonalDetails = {}
+}: {
+    membershipFee?: number,
+    initialPersonalDetails?: Partial<PersonalDetailsData>
+}) {
     const router = useRouter()
     const [currentStep, setCurrentStep] = useState(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
+    // SumUp State
+    const [sumupCheckoutId, setSumupCheckoutId] = useState<string | null>(null)
+    const [isAwaitingSumUp, setIsAwaitingSumUp] = useState(false)
+
     // Form State
-    const [personalDetails, setPersonalDetails] = useState<Partial<PersonalDetailsData>>({})
+    const [personalDetails, setPersonalDetails] = useState<Partial<PersonalDetailsData>>(initialPersonalDetails)
     const [addressDetails, setAddressDetails] = useState<Partial<AddressData>>({})
     const [photoDetails, setPhotoDetails] = useState<Partial<PhotoData>>({})
     const [dependentsDetails, setDependentsDetails] = useState<Partial<DependentsData>>({ dependents: [] })
@@ -84,6 +95,26 @@ export default function ApplicationForm({ membershipFee = 10.00 }: { membershipF
             const result = await submitApplication(fullData)
             if (result.error) {
                 setError(result.error)
+            } else if (finalPaymentData.paymentMethod === 'sumup' && result.membershipId && result.amount) {
+                // Initialize SumUp Checkout API
+                const sumupRes = await fetch('/api/sumup/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: result.amount,
+                        membershipId: result.membershipId,
+                        email: addressDetails.email,
+                        name: result.applicantName,
+                        isRecurring: finalPaymentData.isRecurring // Add this flag
+                    })
+                })
+                const sumupData = await sumupRes.json()
+                if (!sumupRes.ok || !sumupData.checkoutId) {
+                    setError(sumupData.error || 'Failed to initialize payment gateway')
+                    return
+                }
+                setSumupCheckoutId(sumupData.checkoutId)
+                setIsAwaitingSumUp(true)
             } else {
                 router.push('/dashboard')
             }
@@ -188,11 +219,24 @@ export default function ApplicationForm({ membershipFee = 10.00 }: { membershipF
                             isSubmitting={isSubmitting}
                         />
                     )}
-                    {currentStep === 5 && (
+                    {currentStep === 5 && !isAwaitingSumUp && (
                         <PaymentSetupStep
                             onNext={handleNext}
                             isSubmitting={isSubmitting}
-                            membershipFee={membershipFee}
+                            membershipFee={membershipFee + ((dependentsDetails.dependents?.length || 0) * membershipFee)}
+                        />
+                    )}
+                    {isAwaitingSumUp && sumupCheckoutId && (
+                        <SumUpCheckoutWidget
+                            checkoutId={sumupCheckoutId}
+                            onComplete={(status, transactionId) => {
+                                if (status === 'SUCCESS') {
+                                    router.push('/dashboard')
+                                } else {
+                                    setIsAwaitingSumUp(false)
+                                    setSumupCheckoutId(null)
+                                }
+                            }}
                         />
                     )}
                 </div>

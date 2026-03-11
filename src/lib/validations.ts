@@ -16,8 +16,10 @@ export const personalDetailsSchema = z.object({
         }
         return age >= 18
     }, { message: 'You must be at least 18 years old to apply' }),
-    maritalStatus: z.string().optional(),
+    profession: z.string().min(2, 'Profession is required'),
+    position: z.string().min(2, 'Position is required'),
     phone: z.string().min(10, 'Valid phone number is required'),
+    email: z.string().email('Valid email is required'),
 })
 
 export const addressSchema = z.object({
@@ -48,7 +50,7 @@ export const eligibilitySchema = z.object({
     }),
     proposedBy: z.string().optional(),
     secondedBy: z.string().optional(),
-    whatsappOptIn: z.boolean().default(false),
+    whatsappOptIn: z.boolean(),
 })
 
 export type PersonalDetailsData = z.infer<typeof personalDetailsSchema>

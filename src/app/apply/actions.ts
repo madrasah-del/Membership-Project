@@ -45,7 +45,8 @@ export async function submitApplication(data: any) {
                 first_name: validData.firstName,
                 last_name: validData.lastName,
                 date_of_birth: validData.dateOfBirth,
-                marital_status: validData.maritalStatus,
+                profession: validData.profession,
+                position: validData.position,
                 address: validData.address,
                 town: validData.town,
                 postcode: validData.postcode,
@@ -70,11 +71,14 @@ export async function submitApplication(data: any) {
         const isRecurring = (data as any).isRecurring ?? false
         const paymentStatus = paymentMethod === 'sumup' ? 'pending' : 'pending_verification'
 
+        const baseAmount = 1.00; // Testing amount: £1
+        const calculatedAmount = baseAmount + ((validData.dependents?.length || 0) * baseAmount);
+
         const { error: paymentInsertError } = await supabase
             .from('payments')
             .insert({
                 membership_id: newMembership.id,
-                amount: 10.00, // Will be replaced by dynamic setting once linked
+                amount: calculatedAmount,
                 payment_method: paymentMethod,
                 status: paymentStatus,
                 is_recurring: isRecurring,
@@ -83,14 +87,17 @@ export async function submitApplication(data: any) {
 
         if (paymentInsertError) {
             console.error('Payment record error (non-fatal):', paymentInsertError)
-            // Non-fatal: membership is created, but the payment intent wasn't logged.
-            // Admin can reconcile manually.
         }
 
         revalidatePath('/dashboard')
         revalidatePath('/apply')
 
-        return { success: true }
+        return {
+            success: true,
+            membershipId: newMembership.id,
+            amount: calculatedAmount,
+            applicantName: `${validData.firstName} ${validData.lastName}`
+        }
 
     } catch (error) {
         console.error('Submission Error:', error)
