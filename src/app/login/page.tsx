@@ -19,24 +19,35 @@ export default function LoginPage() {
         setError(null)
         setMessage(null)
 
+        // This prevents the "Unexpected error" from showing up when a redirect is happening
+        let isRedirecting = false
+
         try {
             if (isLogin) {
                 const res = await login(formData)
                 if (res?.error) {
                     setError(res.error)
                 } else if (res?.success) {
+                    isRedirecting = true
                     router.push('/dashboard')
-                    router.refresh()
+                    return
                 }
             } else {
                 const res = await signup(formData)
-                if (res?.error) setError(res.error)
-                else setMessage('Check your email for the confirmation link.')
+                if (res?.error) {
+                    setError(res.error)
+                } else {
+                    setMessage('Check your email for the confirmation link.')
+                }
             }
         } catch (e) {
-            setError('An unexpected error occurred. Please try again.')
+            if (!isRedirecting) {
+                setError('An unexpected error occurred. Please try again.')
+            }
         } finally {
-            setIsLoading(false)
+            if (!isRedirecting) {
+                setIsLoading(false)
+            }
         }
     }
 
