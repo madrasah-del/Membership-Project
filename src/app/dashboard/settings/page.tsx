@@ -42,6 +42,10 @@ export default async function SettingsPage() {
         initialBusinessWebsite={membership?.business_website || ''}
         initialBusinessDescription={membership?.business_description || ''}
         initialFunctionalPosition={membership?.functional_position || ''}
+        initialTitle={membership?.title || ''}
+        initialAddress={membership?.address || ''}
+        initialTown={membership?.town || ''}
+        initialPostcode={membership?.postcode || ''}
       />
     </div>
   )

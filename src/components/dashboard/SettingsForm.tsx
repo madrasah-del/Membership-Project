@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Save, UserCircle, Smartphone, Shield, Loader2, CheckCircle2, Briefcase, Store } from 'lucide-react'
 import { updateUserSettings } from '@/app/dashboard/settings/actions'
+import { useRouter } from 'next/navigation'
 
 interface SettingsFormProps {
   initialEmail: string
@@ -20,9 +21,14 @@ interface SettingsFormProps {
   initialBusinessContact: string
   initialBusinessWebsite: string
   initialBusinessDescription: string
+  initialTitle: string
+  initialAddress: string
+  initialTown: string
+  initialPostcode: string
 }
 
 export default function SettingsForm(props: SettingsFormProps) {
+  const router = useRouter()
   const [phone, setPhone] = useState(props.initialPhone)
   const [profession, setProfession] = useState(props.initialProfession)
   const [position, setPosition] = useState(props.initialPosition)
@@ -36,6 +42,27 @@ export default function SettingsForm(props: SettingsFormProps) {
   const [businessContact, setBusinessContact] = useState(props.initialBusinessContact)
   const [businessWebsite, setBusinessWebsite] = useState(props.initialBusinessWebsite)
   const [businessDescription, setBusinessDescription] = useState(props.initialBusinessDescription)
+  const [title, setTitle] = useState(props.initialTitle)
+  const [address, setAddress] = useState(props.initialAddress)
+  const [town, setTown] = useState(props.initialTown)
+  const [postcode, setPostcode] = useState(props.initialPostcode)
+
+  const [professionOther, setProfessionOther] = useState('')
+  const [functionalOther, setFunctionalOther] = useState('')
+
+  const isProfessionOther = props.initialProfession && !['Accounting/Finance', 'Administrative/Clerical', 'Business/Management', 'Construction/Trades', 'Creative/Design/Media', 'Education/Teaching', 'Engineering', 'Healthcare/Medicine', 'IT/Technology/Software', 'Legal', 'Logistics/Transport', 'Marketing/Sales', 'Public Service/Non-Profit', 'Retail/Wholesale', 'Student', 'Retired', 'Unemployed'].includes(props.initialProfession)
+  const isFunctionalOther = props.initialFunctionalPosition && !['Executive/Leadership', 'Management', 'Professional/Specialist', 'Technical/Operations', 'Support/Administrative', 'Self-Employed/Freelance', 'Apprentice/Trainee'].includes(props.initialFunctionalPosition)
+
+  useEffect(() => {
+    if (isProfessionOther) {
+      setProfession('Other')
+      setProfessionOther(props.initialProfession || '')
+    }
+    if (isFunctionalOther) {
+      setFunctionalPosition('Other')
+      setFunctionalOther(props.initialFunctionalPosition || '')
+    }
+  }, [isProfessionOther, isFunctionalOther, props.initialProfession, props.initialFunctionalPosition])
 
   const [isSaving, setIsSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
@@ -49,7 +76,7 @@ export default function SettingsForm(props: SettingsFormProps) {
     try {
       const result = await updateUserSettings({
         phone,
-        profession,
+        profession: profession === 'Other' ? professionOther : profession,
         position,
         newsletter_opt_in: newsletter,
         whatsapp_opt_in: whatsapp,
@@ -59,10 +86,15 @@ export default function SettingsForm(props: SettingsFormProps) {
         business_website: businessWebsite,
         business_contact: businessContact,
         business_description: businessDescription,
-        functional_position: functionalPosition,
+        functional_position: functionalPosition === 'Other' ? functionalOther : functionalPosition,
+        title,
+        address,
+        town,
+        postcode,
       })
       if (result.success) {
         setSuccessMsg('Preferences updated successfully.')
+        router.refresh()
         setTimeout(() => setSuccessMsg(''), 5000)
       } else {
         setErrorMsg(result.error || 'Failed to save changes')
@@ -98,6 +130,48 @@ export default function SettingsForm(props: SettingsFormProps) {
             <label className="text-sm font-semibold text-slate-700">Display Name</label>
             <input type="text" disabled value={`${props.initialFirstName} ${props.initialLastName}`.trim() || 'Not set'} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-medium cursor-not-allowed" />
           </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Title</label>
+            <select 
+              value={title} 
+              onChange={e => setTitle(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+            >
+              <option value="">Select Title</option>
+              <option value="Mr">Mr</option>
+              <option value="Mrs">Mrs</option>
+              <option value="Ms">Ms</option>
+              <option value="Miss">Miss</option>
+              <option value="Dr">Dr</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Street Address</label>
+            <input 
+              type="text" 
+              value={address} 
+              onChange={e => setAddress(e.target.value)} 
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Town / City</label>
+            <input 
+              type="text" 
+              value={town} 
+              onChange={e => setTown(e.target.value)} 
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Postcode</label>
+            <input 
+              type="text" 
+              value={postcode} 
+              onChange={e => setPostcode(e.target.value)} 
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" 
+            />
+          </div>
         </div>
       </div>
 
@@ -121,7 +195,40 @@ export default function SettingsForm(props: SettingsFormProps) {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Profession</label>
-            <input type="text" value={profession} onChange={e => setProfession(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" />
+            <select 
+              value={profession} 
+              onChange={e => setProfession(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+            >
+              <option value="">Select profession</option>
+              <option value="Accounting/Finance">Accounting/Finance</option>
+              <option value="Administrative/Clerical">Administrative/Clerical</option>
+              <option value="Business/Management">Business/Management</option>
+              <option value="Construction/Trades">Construction/Trades</option>
+              <option value="Creative/Design/Media">Creative/Design/Media</option>
+              <option value="Education/Teaching">Education/Teaching</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Healthcare/Medicine">Healthcare/Medicine</option>
+              <option value="IT/Technology/Software">IT/Technology/Software</option>
+              <option value="Legal">Legal</option>
+              <option value="Logistics/Transport">Logistics/Transport</option>
+              <option value="Marketing/Sales">Marketing/Sales</option>
+              <option value="Public Service/Non-Profit">Public Service/Non-Profit</option>
+              <option value="Retail/Wholesale">Retail/Wholesale</option>
+              <option value="Student">Student</option>
+              <option value="Retired">Retired</option>
+              <option value="Unemployed">Unemployed</option>
+              <option value="Other">Other...</option>
+            </select>
+            {profession === 'Other' && (
+              <input 
+                type="text"
+                placeholder="Please specify profession"
+                value={professionOther}
+                onChange={e => setProfessionOther(e.target.value)}
+                className="w-full mt-2 px-4 py-2 border-2 border-brand-100 rounded-xl outline-none focus:border-brand-500 transition-all font-medium text-sm"
+              />
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Position / Job Title</label>
@@ -129,13 +236,30 @@ export default function SettingsForm(props: SettingsFormProps) {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Functional Area (Business/Profession)</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Finance, Healthcare, Engineering"
+            <select 
               value={functionalPosition} 
-              onChange={e => setFunctionalPosition(e.target.value)} 
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" 
-            />
+              onChange={e => setFunctionalPosition(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all"
+            >
+              <option value="">Select area</option>
+              <option value="Executive/Leadership">Executive/Leadership</option>
+              <option value="Management">Management</option>
+              <option value="Professional/Specialist">Professional/Specialist</option>
+              <option value="Technical/Operations">Technical/Operations</option>
+              <option value="Support/Administrative">Support/Administrative</option>
+              <option value="Self-Employed/Freelance">Self-Employed/Freelance</option>
+              <option value="Apprentice/Trainee">Apprentice/Trainee</option>
+              <option value="Other">Other...</option>
+            </select>
+            {functionalPosition === 'Other' && (
+              <input 
+                type="text"
+                placeholder="Please specify area"
+                value={functionalOther}
+                onChange={e => setFunctionalOther(e.target.value)}
+                className="w-full mt-2 px-4 py-2 border-2 border-brand-100 rounded-xl outline-none focus:border-brand-500 transition-all font-medium text-sm"
+              />
+            )}
           </div>
         </div>
       </div>

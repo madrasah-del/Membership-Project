@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { getMemberPayments, cancelAutoRenewal, initializeCardUpdateCheckout, finalizeCardUpdate, initializeMembershipPayment, recordDashboardPaymentSuccess } from './actions'
 import { format } from 'date-fns'
 import { CreditCard, AlertCircle, RefreshCw, XCircle, CheckCircle, Edit, ShieldCheck, Save, Clock } from 'lucide-react'
@@ -12,6 +13,7 @@ export default function PaymentsPage({
     hasActiveSubscription,
     membershipId,
     activeInstrument,
+    membershipStatus,
     baseFee = 10.00,
     dependentCount = 0
 }: {
@@ -19,6 +21,7 @@ export default function PaymentsPage({
     hasActiveSubscription: boolean,
     membershipId: string | null,
     activeInstrument: { brand: string, last4: string, expMonth: string, expYear: string } | null,
+    membershipStatus?: string,
     baseFee?: number,
     dependentCount?: number
 }) {
@@ -35,7 +38,16 @@ export default function PaymentsPage({
     const [paymentMessage, setPaymentMessage] = useState('')
     const [mode, setMode] = useState<'pay' | 'update' | null>(null)
 
-    const totalFee = baseFee + (dependentCount * baseFee)
+    const totalFee = baseFee + (dependentCount * 5.00)
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('pay') === 'true' && (membershipStatus === 'pending_payment' || membershipStatus === 'pending' || membershipStatus === 'approved')) {
+            startPayment();
+        } else if (urlParams.get('update') === 'true') {
+            startUpdate();
+        }
+    }, [membershipStatus]); // Added membershipStatus to dependency array
 
     const formatCardBrand = (brand: string) => {
         if (!brand) return 'Card'
@@ -162,7 +174,7 @@ export default function PaymentsPage({
             </div>
 
             {/* Complete Membership Payment Section */}
-            {!hasActiveSubscription && (
+            {(membershipStatus === 'pending_payment' || membershipStatus === 'pending' || membershipStatus === 'approved') && (
                 <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-900 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-1/4 -translate-y-1/4 group-hover:scale-110 transition-transform duration-700">
                         <CreditCard size={240} />
@@ -250,7 +262,7 @@ export default function PaymentsPage({
                                             className="w-full flex items-center justify-center gap-2 px-4 py-3 text-gray-700 font-semibold bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors shadow-sm"
                                         >
                                             <Edit className="w-4 h-4" />
-                                            Update Card
+                                            Update Payment Method
                                         </button>
                                         <button
                                             onClick={handleCancelSubscription}
@@ -268,9 +280,14 @@ export default function PaymentsPage({
                                         <CreditCard className="w-12 h-12 text-gray-300" />
                                     </div>
                                     <p className="text-gray-500 font-medium max-w-[200px]">No active payment method on file.</p>
-                                    {!hasActiveSubscription && (
-                                        <p className="text-sm text-gray-400 mt-2">Complete your first payment to save a card.</p>
-                                    )}
+                                    <button
+                                        onClick={startUpdate}
+                                        disabled={isInitializingPayment}
+                                        className="mt-6 flex items-center justify-center gap-2 px-6 py-4 bg-brand-600 text-white font-black rounded-xl hover:bg-brand-700 transition-all shadow-lg shadow-brand-600/20 active:scale-95 text-xs uppercase tracking-widest w-full"
+                                    >
+                                        <CreditCard className="w-5 h-5" />
+                                        Add Payment Method
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -356,6 +373,13 @@ export default function PaymentsPage({
                                                     <Clock className="w-6 h-6 text-gray-300" />
                                                 </div>
                                                 <p className="text-gray-500 font-medium">No payment records found.</p>
+                                                <Link 
+                                                    href="/dashboard/payments?pay=true"
+                                                    className="group/pay block w-full text-center bg-white text-slate-900 font-black py-4 rounded-2xl hover:bg-brand-50 transition-all shadow-xl uppercase tracking-widest text-xs flex items-center justify-center gap-2 mt-6"
+                                                >
+                                                    <CreditCard className="w-4 h-4 text-brand-600 group-hover/pay:scale-110 transition-transform" />
+                                                    Pay Annual Membership Fee
+                                                </Link>
                                             </td>
                                         </tr>
                                     )}

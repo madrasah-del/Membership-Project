@@ -469,10 +469,10 @@ export async function recordDashboardPaymentSuccess(membershipId: string, transa
             .eq('id', membershipId)
             .single()
             
-        if (currentMembership && (currentMembership.status === 'pending_payment' || currentMembership.status === 'pending')) {
+        if (currentMembership && (currentMembership.status === 'pending_payment' || currentMembership.status === 'pending' || currentMembership.status === 'approved')) {
             await supabase
                 .from('memberships')
-                .update({ status: 'pending_approval' })
+                .update({ status: 'active' })
                 .eq('id', membershipId)
         }
 

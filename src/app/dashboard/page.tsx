@@ -42,6 +42,10 @@ export default async function DashboardPage() {
         business_contact: membership?.business_contact || '',
         business_description: membership?.business_description || '',
         functional_position: membership?.functional_position || '',
+        title: membership?.title || '',
+        address: membership?.address || '',
+        town: membership?.town || '',
+        postcode: membership?.postcode || '',
     }
 
     return (

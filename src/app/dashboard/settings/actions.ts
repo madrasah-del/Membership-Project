@@ -4,18 +4,22 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function updateUserSettings(data: {
-  phone: string
-  profession: string
-  position: string
-  newsletter_opt_in: boolean
-  whatsapp_opt_in: boolean
-  business_opt_in: boolean
-  business_type: string
-  business_name: string
-  business_website: string
-  business_contact: string
-  business_description: string
-  functional_position: string
+  phone?: string
+  profession?: string
+  position?: string
+  newsletter_opt_in?: boolean
+  whatsapp_opt_in?: boolean
+  business_opt_in?: boolean
+  business_type?: string
+  business_name?: string
+  business_website?: string
+  business_contact?: string
+  business_description?: string
+  functional_position?: string
+  title?: string
+  address?: string
+  town?: string
+  postcode?: string
   dependents?: any[]
 }) {
   try {
@@ -44,24 +48,25 @@ export async function updateUserSettings(data: {
     }
 
     // Update preferences
-    const updateData: any = {
-      phone: data.phone,
-      profession: data.profession,
-      position: data.position,
-      newsletter_opt_in: data.newsletter_opt_in,
-      whatsapp_opt_in: data.whatsapp_opt_in,
-      business_opt_in: data.business_opt_in,
-      business_type: data.business_type,
-      business_name: data.business_name,
-      business_website: data.business_website,
-      business_contact: data.business_contact,
-      business_description: data.business_description,
-      functional_position: data.functional_position,
-    }
-
-    if (data.dependents !== undefined) {
-      updateData.dependents = data.dependents
-    }
+    const updateData: any = {}
+    
+    if (data.phone !== undefined) updateData.phone = data.phone
+    if (data.profession !== undefined) updateData.profession = data.profession
+    if (data.position !== undefined) updateData.position = data.position
+    if (data.newsletter_opt_in !== undefined) updateData.newsletter_opt_in = data.newsletter_opt_in
+    if (data.whatsapp_opt_in !== undefined) updateData.whatsapp_opt_in = data.whatsapp_opt_in
+    if (data.business_opt_in !== undefined) updateData.business_opt_in = data.business_opt_in
+    if (data.business_type !== undefined) updateData.business_type = data.business_type
+    if (data.business_name !== undefined) updateData.business_name = data.business_name
+    if (data.business_website !== undefined) updateData.business_website = data.business_website
+    if (data.business_contact !== undefined) updateData.business_contact = data.business_contact
+    if (data.business_description !== undefined) updateData.business_description = data.business_description
+    if (data.functional_position !== undefined) updateData.functional_position = data.functional_position
+    if (data.title !== undefined) updateData.title = data.title
+    if (data.address !== undefined) updateData.address = data.address
+    if (data.town !== undefined) updateData.town = data.town
+    if (data.postcode !== undefined) updateData.postcode = data.postcode
+    if (data.dependents !== undefined) updateData.dependents = data.dependents
 
     const { error: updateError } = await supabase
       .from('memberships')

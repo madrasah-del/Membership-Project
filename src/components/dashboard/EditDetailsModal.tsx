@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Save, Loader2, Phone, Briefcase, Store } from 'lucide-react'
 import { updateUserSettings } from '@/app/dashboard/settings/actions'
 
@@ -20,6 +20,10 @@ interface EditDetailsModalProps {
         business_website: string
         business_contact: string
         business_description: string
+        title: string
+        address: string
+        town: string
+        postcode: string
     }
 }
 
@@ -28,6 +32,10 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
     const [profession, setProfession] = useState(initialData.profession)
     const [position, setPosition] = useState(initialData.position)
     const [functionalPosition, setFunctionalPosition] = useState(initialData.functional_position)
+    const [title, setTitle] = useState(initialData.title || '')
+    const [address, setAddress] = useState(initialData.address || '')
+    const [town, setTown] = useState(initialData.town || '')
+    const [postcode, setPostcode] = useState(initialData.postcode || '')
     
     // Business fields
     const [businessOptIn, setBusinessOptIn] = useState(initialData.business_opt_in)
@@ -36,6 +44,23 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
     const [businessWebsite, setBusinessWebsite] = useState(initialData.business_website)
     const [businessContact, setBusinessContact] = useState(initialData.business_contact)
     const [businessDescription, setBusinessDescription] = useState(initialData.business_description)
+
+    const [professionOther, setProfessionOther] = useState('')
+    const [functionalOther, setFunctionalOther] = useState('')
+
+    const isProfessionOther = initialData.profession && !['Accounting/Finance', 'Administrative/Clerical', 'Business/Management', 'Construction/Trades', 'Creative/Design/Media', 'Education/Teaching', 'Engineering', 'Healthcare/Medicine', 'IT/Technology/Software', 'Legal', 'Logistics/Transport', 'Marketing/Sales', 'Public Service/Non-Profit', 'Retail/Wholesale', 'Student', 'Retired', 'Unemployed'].includes(initialData.profession)
+    const isFunctionalOther = initialData.functional_position && !['Executive/Leadership', 'Management', 'Professional/Specialist', 'Technical/Operations', 'Support/Administrative', 'Self-Employed/Freelance', 'Apprentice/Trainee'].includes(initialData.functional_position)
+
+    useEffect(() => {
+        if (isProfessionOther) {
+            setProfession('Other')
+            setProfessionOther(initialData.profession || '')
+        }
+        if (isFunctionalOther) {
+            setFunctionalPosition('Other')
+            setFunctionalOther(initialData.functional_position || '')
+        }
+    }, [isProfessionOther, isFunctionalOther, initialData.profession, initialData.functional_position])
 
     const [isSaving, setIsSaving] = useState(false)
     const [error, setError] = useState('')
@@ -50,15 +75,19 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
             const result = await updateUserSettings({
                 ...initialData,
                 phone,
-                profession,
+                profession: profession === 'Other' ? professionOther : profession,
                 position,
-                functional_position: functionalPosition,
+                functional_position: functionalPosition === 'Other' ? functionalOther : functionalPosition,
                 business_opt_in: businessOptIn,
                 business_name: businessName,
                 business_type: businessType,
                 business_website: businessWebsite,
                 business_contact: businessContact,
-                business_description: businessDescription
+                business_description: businessDescription,
+                title,
+                address,
+                town,
+                postcode
             })
 
             if (result.success) {
@@ -92,6 +121,63 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
                     )}
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-2 md:col-span-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                Title
+                            </label>
+                            <select 
+                                value={title} 
+                                onChange={e => setTitle(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                            >
+                                <option value="">Select Title</option>
+                                <option value="Mr">Mr</option>
+                                <option value="Mrs">Mrs</option>
+                                <option value="Ms">Ms</option>
+                                <option value="Miss">Miss</option>
+                                <option value="Dr">Dr</option>
+                            </select>
+                        </div>
+
+                        <div className="space-y-2 md:col-span-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                Street Address
+                            </label>
+                            <input 
+                                type="text" 
+                                value={address} 
+                                onChange={e => setAddress(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                placeholder="123 Example St"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                Town / City
+                            </label>
+                            <input 
+                                type="text" 
+                                value={town} 
+                                onChange={e => setTown(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                placeholder="Epsom"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                Postcode
+                            </label>
+                            <input 
+                                type="text" 
+                                value={postcode} 
+                                onChange={e => setPostcode(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                placeholder="KT11..."
+                            />
+                        </div>
+
                         <div className="space-y-2">
                             <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-brand-500" />
@@ -111,13 +197,40 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
                                 <Briefcase className="w-4 h-4 text-brand-500" />
                                 Profession
                             </label>
-                            <input 
-                                type="text" 
+                            <select 
                                 value={profession} 
                                 onChange={e => setProfession(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="e.g. Doctor"
-                            />
+                            >
+                                <option value="">Select profession</option>
+                                <option value="Accounting/Finance">Accounting/Finance</option>
+                                <option value="Administrative/Clerical">Administrative/Clerical</option>
+                                <option value="Business/Management">Business/Management</option>
+                                <option value="Construction/Trades">Construction/Trades</option>
+                                <option value="Creative/Design/Media">Creative/Design/Media</option>
+                                <option value="Education/Teaching">Education/Teaching</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Healthcare/Medicine">Healthcare/Medicine</option>
+                                <option value="IT/Technology/Software">IT/Technology/Software</option>
+                                <option value="Legal">Legal</option>
+                                <option value="Logistics/Transport">Logistics/Transport</option>
+                                <option value="Marketing/Sales">Marketing/Sales</option>
+                                <option value="Public Service/Non-Profit">Public Service/Non-Profit</option>
+                                <option value="Retail/Wholesale">Retail/Wholesale</option>
+                                <option value="Student">Student</option>
+                                <option value="Retired">Retired</option>
+                                <option value="Unemployed">Unemployed</option>
+                                <option value="Other">Other...</option>
+                            </select>
+                            {profession === 'Other' && (
+                                <input 
+                                    type="text"
+                                    placeholder="Please specify profession"
+                                    value={professionOther}
+                                    onChange={e => setProfessionOther(e.target.value)}
+                                    className="w-full mt-2 px-4 py-2 border-2 border-brand-100 rounded-xl outline-none focus:border-brand-500 transition-all font-medium text-sm"
+                                />
+                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -125,13 +238,30 @@ export default function EditDetailsModal({ isOpen, onClose, initialData }: EditD
                                 <Briefcase className="w-4 h-4 text-brand-500" />
                                 Functional Area
                             </label>
-                            <input 
-                                type="text" 
+                            <select 
                                 value={functionalPosition} 
                                 onChange={e => setFunctionalPosition(e.target.value)}
                                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="e.g. Engineering"
-                            />
+                            >
+                                <option value="">Select area</option>
+                                <option value="Executive/Leadership">Executive/Leadership</option>
+                                <option value="Management">Management</option>
+                                <option value="Professional/Specialist">Professional/Specialist</option>
+                                <option value="Technical/Operations">Technical/Operations</option>
+                                <option value="Support/Administrative">Support/Administrative</option>
+                                <option value="Self-Employed/Freelance">Self-Employed/Freelance</option>
+                                <option value="Apprentice/Trainee">Apprentice/Trainee</option>
+                                <option value="Other">Other...</option>
+                            </select>
+                            {functionalPosition === 'Other' && (
+                                <input 
+                                    type="text"
+                                    placeholder="Please specify area"
+                                    value={functionalOther}
+                                    onChange={e => setFunctionalOther(e.target.value)}
+                                    className="w-full mt-2 px-4 py-2 border-2 border-brand-100 rounded-xl outline-none focus:border-brand-500 transition-all font-medium text-sm"
+                                />
+                            )}
                         </div>
 
                         <div className="space-y-2">

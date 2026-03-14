@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Users, UserPlus2, Mail, Phone, Briefcase, Trash2, Loader2, ChevronDown, ChevronUp, UserCircle2 } from 'lucide-react'
+import { Plus, Users, UserPlus2, Mail, Phone, Briefcase, Trash2, Loader2, ChevronDown, ChevronUp, UserCircle2, Save, Pencil } from 'lucide-react'
 import { updateUserSettings } from '@/app/dashboard/settings/actions'
 
 interface HouseholdMembersProps {
@@ -11,31 +11,132 @@ interface HouseholdMembersProps {
 
 export default function HouseholdMembers({ dependents = [], currentSettings }: HouseholdMembersProps) {
     const [isAdding, setIsAdding] = useState(false)
+    const [isEditing, setIsEditing] = useState<number | null>(null) // Index of member being edited
     const [isSaving, setIsSaving] = useState(false)
     const [expandedMember, setExpandedMember] = useState<number | null>(null)
     
     const [newMember, setNewMember] = useState({
+        title: '',
         first_name: '',
         last_name: '',
         relationship: '',
         email: '',
         phone: '',
         profession: '',
-        functional_position: ''
+        functional_position: '',
+        job_title: '',
+        business_opt_in: false,
+        business_name: '',
+        business_type: '',
+        business_website: ''
     })
 
+    const [editingMemberData, setEditingMemberData] = useState<any>({
+        title: '',
+        first_name: '',
+        last_name: '',
+        relationship: '',
+        email: '',
+        phone: '',
+        profession: '',
+        functional_position: '',
+        job_title: '',
+        business_opt_in: false,
+        business_name: '',
+        business_type: '',
+        business_website: ''
+    })
+
+    const [professionOther, setProfessionOther] = useState('')
+    const [functionalOther, setFunctionalOther] = useState('')
+
+    const professions = [
+        'Accounting/Finance', 'Administrative/Clerical', 'Business/Management', 
+        'Construction/Trades', 'Creative/Design/Media', 'Education/Teaching', 
+        'Engineering', 'Healthcare/Medicine', 'IT/Technology/Software', 
+        'Legal', 'Logistics/Transport', 'Marketing/Sales', 
+        'Public Service/Non-Profit', 'Retail/Wholesale', 'Student', 
+        'Retired', 'Unemployed'
+    ]
+
+    const functionalAreas = [
+        'Executive/Leadership', 'Management', 'Professional/Specialist', 
+        'Technical/Operations', 'Support/Administrative', 
+        'Self-Employed/Freelance', 'Apprentice/Trainee'
+    ]
+
     const handleAddDependent = async () => {
-        if (!newMember.first_name || !newMember.last_name) return
+        if (!newMember.first_name || !newMember.last_name || !newMember.email || !newMember.phone) {
+            alert('First Name, Last Name, Email, and Phone number are required fields.')
+            return
+        }
         
         setIsSaving(true)
         try {
-            const updatedDependents = [...dependents, newMember]
+            const finalMember = { 
+                ...newMember,
+                profession: newMember.profession === 'Other' ? professionOther : newMember.profession,
+                functional_position: newMember.functional_position === 'Other' ? functionalOther : newMember.functional_position
+            }
+            const updatedDependents = [...dependents, finalMember]
             const result = await updateUserSettings({
                 ...currentSettings,
                 dependents: updatedDependents
             })
 
             if (result.success) {
+                window.location.reload()
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
+    const startEditing = (index: number) => {
+        const member = dependents[index]
+        setEditingMemberData({
+            ...member,
+            profession: professions.includes(member.profession) ? member.profession : (member.profession ? 'Other' : ''),
+            functional_position: functionalAreas.includes(member.functional_position) ? member.functional_position : (member.functional_position ? 'Other' : ''),
+        })
+        if (member.profession && !professions.includes(member.profession)) {
+            setProfessionOther(member.profession)
+        } else {
+            setProfessionOther('')
+        }
+        if (member.functional_position && !functionalAreas.includes(member.functional_position)) {
+            setFunctionalOther(member.functional_position)
+        } else {
+            setFunctionalOther('')
+        }
+        setIsEditing(index)
+        setIsAdding(false)
+    }
+
+    const handleUpdateMember = async () => {
+        if (!editingMemberData.first_name || !editingMemberData.last_name || !editingMemberData.email || !editingMemberData.phone) {
+            alert('First Name, Last Name, Email, and Phone number are required.')
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            const updatedDependents = [...dependents]
+            updatedDependents[isEditing!] = {
+                ...editingMemberData,
+                profession: editingMemberData.profession === 'Other' ? professionOther : editingMemberData.profession,
+                functional_position: editingMemberData.functional_position === 'Other' ? functionalOther : editingMemberData.functional_position
+            }
+
+            const result = await updateUserSettings({
+                ...currentSettings,
+                dependents: updatedDependents
+            })
+
+            if (result.success) {
+                setIsEditing(null)
                 window.location.reload()
             }
         } catch (err) {
@@ -75,91 +176,182 @@ export default function HouseholdMembers({ dependents = [], currentSettings }: H
                         {dependents.length} Registered Dependents
                     </p>
                 </div>
-                <button 
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
-                >
-                    {isAdding ? 'Cancel' : <><Plus className="w-4 h-4" /> Add Member</>}
-                </button>
+                {!isAdding && isEditing === null && (
+                    <button 
+                        onClick={() => setIsAdding(true)}
+                        className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                    >
+                        <Plus className="w-4 h-4" /> Add Member
+                    </button>
+                )}
             </div>
 
-            {isAdding && (
-                <div className="bg-white rounded-[2rem] border-2 border-brand-100 p-8 shadow-xl shadow-brand-600/5 animate-scale-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name</label>
-                            <input 
-                                type="text" 
-                                value={newMember.first_name} 
-                                onChange={e => setNewMember({...newMember, first_name: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="Required"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
-                            <input 
-                                type="text" 
-                                value={newMember.last_name} 
-                                onChange={e => setNewMember({...newMember, last_name: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="Required"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Relationship</label>
-                            <select 
-                                value={newMember.relationship} 
-                                onChange={e => setNewMember({...newMember, relationship: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                            >
-                                <option value="">Select...</option>
-                                <option value="spouse">Spouse</option>
-                                <option value="child">Child</option>
-                                <option value="parent">Parent</option>
-                                <option value="sibling">Sibling</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email Address</label>
-                            <input 
-                                type="email" 
-                                value={newMember.email} 
-                                onChange={e => setNewMember({...newMember, email: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="Optional"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone Number</label>
-                            <input 
-                                type="tel" 
-                                value={newMember.phone} 
-                                onChange={e => setNewMember({...newMember, phone: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="Optional"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Profession</label>
-                            <input 
-                                type="text" 
-                                value={newMember.profession} 
-                                onChange={e => setNewMember({...newMember, profession: e.target.value})}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
-                                placeholder="Optional"
-                            />
-                        </div>
+            {/* Edit/Add Form Container */}
+            {(isAdding || isEditing !== null) && (
+                <div className="bg-white rounded-[2rem] border-2 border-brand-500/20 p-8 shadow-2xl shadow-brand-600/5 animate-scale-in">
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-50">
+                        <h4 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                            {isEditing !== null ? <Pencil className="w-6 h-6 text-brand-500" /> : <UserPlus2 className="w-6 h-6 text-brand-500" />}
+                            {isEditing !== null ? 'Edit Member Details' : 'Add New Member'}
+                        </h4>
+                        <button 
+                            onClick={() => { setIsAdding(false); setIsEditing(null); }}
+                            className="text-slate-400 hover:text-slate-600 font-bold uppercase text-[10px] tracking-widest"
+                        >
+                            Cancel
+                        </button>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Use editingMemberData if isEditing, else newMember */}
+                        {(() => {
+                            const data = isEditing !== null ? editingMemberData : newMember
+                            const setData = (val: any) => isEditing !== null ? setEditingMemberData(val) : setNewMember(val)
+                            
+                            return (
+                                <>
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Title</label>
+                                        <select 
+                                            value={data.title} 
+                                            onChange={e => setData({...data, title: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                        >
+                                            <option value="">Select Title</option>
+                                            <option value="Mr">Mr</option>
+                                            <option value="Mrs">Mrs</option>
+                                            <option value="Ms">Ms</option>
+                                            <option value="Miss">Miss</option>
+                                            <option value="Dr">Dr</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name *</label>
+                                        <input 
+                                            type="text" 
+                                            value={data.first_name} 
+                                            onChange={e => setData({...data, first_name: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                            placeholder="Required"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name *</label>
+                                        <input 
+                                            type="text" 
+                                            value={data.last_name} 
+                                            onChange={e => setData({...data, last_name: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                            placeholder="Required"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-brand-600">Relationship *</label>
+                                        <select 
+                                            value={data.relationship} 
+                                            onChange={e => setData({...data, relationship: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-brand-50 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium bg-brand-50/20"
+                                            required
+                                        >
+                                            <option value="">Select...</option>
+                                            <option value="spouse">Spouse</option>
+                                            <option value="partner">Partner</option>
+                                            <option value="child">Child</option>
+                                            <option value="parent">Parent</option>
+                                            <option value="sibling">Sibling</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-brand-600">Email Address *</label>
+                                        <input 
+                                            type="email" 
+                                            value={data.email} 
+                                            onChange={e => setData({...data, email: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-brand-50 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium bg-brand-50/20"
+                                            placeholder="Essential"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 text-brand-600">Phone Number *</label>
+                                        <input 
+                                            type="tel" 
+                                            value={data.phone} 
+                                            onChange={e => setData({...data, phone: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border-2 border-brand-50 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium bg-brand-50/20"
+                                            placeholder="Essential"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Profession</label>
+                                        <select 
+                                            value={data.profession} 
+                                            onChange={e => setData({...data, profession: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                        >
+                                            <option value="">Select profession</option>
+                                            {professions.map(p => <option key={p} value={p}>{p}</option>)}
+                                            <option value="Other">Other...</option>
+                                        </select>
+                                        {data.profession === 'Other' && (
+                                            <input 
+                                                type="text"
+                                                value={professionOther}
+                                                onChange={e => setProfessionOther(e.target.value)}
+                                                className="mt-2 w-full px-4 py-3 rounded-xl border-2 border-brand-100 focus:border-brand-500 outline-none transition-all font-medium text-sm animate-fade-in"
+                                                placeholder="Please specify profession"
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Functional Area</label>
+                                        <select 
+                                            value={data.functional_position} 
+                                            onChange={e => setData({...data, functional_position: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                        >
+                                            <option value="">Select area</option>
+                                            {functionalAreas.map(f => <option key={f} value={f}>{f}</option>)}
+                                            <option value="Other">Other...</option>
+                                        </select>
+                                        {data.functional_position === 'Other' && (
+                                            <input 
+                                                type="text"
+                                                value={functionalOther}
+                                                onChange={e => setFunctionalOther(e.target.value)}
+                                                className="mt-2 w-full px-4 py-3 rounded-xl border-2 border-brand-100 focus:border-brand-500 outline-none transition-all font-medium text-sm animate-fade-in"
+                                                placeholder="Please specify area"
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5 md:col-span-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Job Title / Specific Role</label>
+                                        <input 
+                                            type="text" 
+                                            value={data.job_title} 
+                                            onChange={e => setData({...data, job_title: e.target.value})}
+                                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-medium"
+                                            placeholder="e.g. Director, Teacher, Consultant"
+                                        />
+                                    </div>
+
+                                </>
+                            )
+                        })()}
+                    </div>
+
                     <div className="mt-8 flex gap-4">
                         <button 
-                            onClick={handleAddDependent}
-                            disabled={isSaving || !newMember.first_name || !newMember.last_name}
+                            onClick={isEditing !== null ? handleUpdateMember : handleAddDependent}
+                            disabled={isSaving}
                             className="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-brand-600/20 flex items-center justify-center gap-2 uppercase tracking-widest text-xs disabled:opacity-50"
                         >
-                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <UserPlus2 className="w-5 h-5" />}
-                            Confirm Member
+                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (isEditing !== null ? <Save className="w-5 h-5" /> : <UserPlus2 className="w-5 h-5" />)}
+                            {isEditing !== null ? 'Save Changes' : 'Confirm Member'}
                         </button>
                     </div>
                 </div>
@@ -191,16 +383,29 @@ export default function HouseholdMembers({ dependents = [], currentSettings }: H
                                         <UserCircle2 className="w-7 h-7" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-lg font-black text-slate-900 truncate">{member.first_name} {member.last_name}</p>
+                                        <p className="text-lg font-black text-slate-900 truncate">
+                                            {member.title ? `${member.title} ` : ''}{member.first_name} {member.last_name}
+                                        </p>
                                         <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest">{member.relationship}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <button 
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                startEditing(index);
+                                            }}
+                                            className="p-2 hover:bg-brand-50 text-slate-300 hover:text-brand-600 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                            title="Edit Member"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 handleRemoveDependent(index);
                                             }}
                                             className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                            title="Remove Member"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -220,6 +425,12 @@ export default function HouseholdMembers({ dependents = [], currentSettings }: H
                                                 <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
                                                     <Phone className="w-4 h-4 text-slate-300 shrink-0" />
                                                     <span>{member.phone}</span>
+                                                </div>
+                                            )}
+                                            {member.job_title && (
+                                                <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Job Title:</span>
+                                                    <span>{member.job_title}</span>
                                                 </div>
                                             )}
                                             {member.profession && (
