@@ -177,41 +177,64 @@ export default function HouseholdMembers({ dependents = [], currentSettings }: H
                     </div>
                 ) : (
                     dependents.map((member, index) => (
-                        <div key={index} className="bg-white rounded-[2rem] border border-slate-200 hover:border-brand-300 transition-all hover:shadow-2xl hover:shadow-brand-600/5 group overflow-hidden animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+                        <div 
+                            key={index} 
+                            onClick={() => setExpandedMember(expandedMember === index ? null : index)}
+                            className={`bg-white rounded-[2rem] border transition-all cursor-pointer group overflow-hidden animate-fade-in-up
+                                ${expandedMember === index ? 'border-brand-500 ring-4 ring-brand-500/5 shadow-2xl' : 'border-slate-200 hover:border-brand-300 hover:shadow-xl'}`} 
+                            style={{ animationDelay: `${index * 100}ms` }}
+                        >
                             <div className="p-6">
-                                <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-brand-100 transition-colors flex items-center justify-center text-slate-400 group-hover:text-brand-600">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors
+                                        ${expandedMember === index ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:text-brand-600'}`}>
                                         <UserCircle2 className="w-7 h-7" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-lg font-black text-slate-900 truncate">{member.first_name} {member.last_name}</p>
                                         <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest">{member.relationship}</p>
                                     </div>
-                                    <button 
-                                        onClick={() => handleRemoveDependent(index)}
-                                        className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all rounded-lg opacity-0 group-hover:opacity-100"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveDependent(index);
+                                            }}
+                                            className="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all rounded-lg opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        {expandedMember === index ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {member.email && (
-                                        <div className="flex items-center gap-3 text-sm font-bold text-slate-500">
-                                            <Mail className="w-4 h-4 text-slate-300 shrink-0" />
-                                            <span className="truncate">{member.email}</span>
-                                        </div>
-                                    )}
-                                    {member.phone && (
-                                        <div className="flex items-center gap-3 text-sm font-bold text-slate-500">
-                                            <Phone className="w-4 h-4 text-slate-300 shrink-0" />
-                                            <span>{member.phone}</span>
-                                        </div>
-                                    )}
-                                    {member.profession && (
-                                        <div className="flex items-center gap-3 text-sm font-bold text-slate-500 pt-1">
-                                            <Briefcase className="w-4 h-4 text-brand-300 shrink-0" />
-                                            <span className="italic">{member.profession}</span>
+                                    <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
+                                        <Mail className="w-4 h-4 text-slate-300 shrink-0" />
+                                        <span className="truncate">{member.email || 'No email provided'}</span>
+                                    </div>
+                                    
+                                    {expandedMember === index && (
+                                        <div className="pt-2 space-y-3 border-t border-slate-50 mt-2 animate-fade-in">
+                                            {member.phone && (
+                                                <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
+                                                    <Phone className="w-4 h-4 text-slate-300 shrink-0" />
+                                                    <span>{member.phone}</span>
+                                                </div>
+                                            )}
+                                            {member.profession && (
+                                                <div className="flex items-center gap-3 text-sm font-bold text-slate-600">
+                                                    <Briefcase className="w-4 h-4 text-brand-300 shrink-0" />
+                                                    <span>{member.profession}</span>
+                                                </div>
+                                            )}
+                                            {member.functional_position && (
+                                                <div className="flex items-center gap-3 text-sm font-bold text-slate-500 pl-7">
+                                                    <span className="text-[10px] font-bold text-indigo-400 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                                                        {member.functional_position}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -221,7 +244,7 @@ export default function HouseholdMembers({ dependents = [], currentSettings }: H
                                     ${member.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
                                     {member.status || 'Active Member'}
                                 </span>
-                                <span className="text-[9px] font-bold text-slate-400">ID: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase">Click for details</span>
                             </div>
                         </div>
                     ))
