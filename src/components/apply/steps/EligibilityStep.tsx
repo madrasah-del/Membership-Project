@@ -7,9 +7,10 @@ interface Props {
     initialData: Partial<EligibilityData>
     onNext: (data: any) => void
     isSubmitting: boolean
+    isEpsomResident?: boolean
 }
 
-export function EligibilityStep({ initialData, onNext, isSubmitting }: Props) {
+export function EligibilityStep({ initialData, onNext, isSubmitting, isEpsomResident = true }: Props) {
     const {
         register,
         handleSubmit,
@@ -71,31 +72,24 @@ export function EligibilityStep({ initialData, onNext, isSubmitting }: Props) {
                             {errors.isResidentOrRegular && <p className="text-red-500 text-xs mt-2 font-medium">{errors.isResidentOrRegular.message}</p>}
                         </div>
                     </label>
-                </div>
 
-                <div className="w-full h-px bg-slate-100 my-8"></div>
-
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Proposers (Optional)</h3>
-                <p className="text-sm text-slate-500 mb-4">If you know existing members who can propose your membership, you may enter their names below.</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700 pl-1">Proposed By</label>
-                        <input
-                            {...register('proposedBy')}
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
-                            placeholder="Name of member"
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700 pl-1">Seconded By</label>
-                        <input
-                            {...register('secondedBy')}
-                            className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
-                            placeholder="Name of member"
-                        />
-                    </div>
+                    {!isEpsomResident && (
+                        <label className="flex items-start gap-4 p-4 rounded-xl border border-amber-200 bg-amber-50/30 hover:bg-amber-50/50 transition-colors cursor-pointer animate-in fade-in slide-in-from-left-2 duration-300">
+                            <div className="flex items-center h-6 shrink-0 pt-0.5">
+                                <input
+                                    type="checkbox"
+                                    {...register('isNonResidentConfirmation')}
+                                    required
+                                    className="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 transition-colors cursor-pointer"
+                                />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-amber-900 mb-0.5">Non-Resident Confirmation *</p>
+                                <p className="text-sm text-amber-800">I confirm that I am not a resident of Epsom at the time of this application and I understand that my application is subject to the constitutional rules for non-residents.</p>
+                                {errors.isNonResidentConfirmation && <p className="text-red-500 text-xs mt-2 font-medium">{errors.isNonResidentConfirmation.message}</p>}
+                            </div>
+                        </label>
+                    )}
                 </div>
 
                 <div className="w-full h-px bg-slate-100 my-8"></div>
@@ -128,11 +122,11 @@ export function EligibilityStep({ initialData, onNext, isSubmitting }: Props) {
                     {isSubmitting ? (
                         <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
                     ) : (
-                        <><CheckCircle2 className="w-5 h-5" /> Submit Application</>
+                        <><CheckCircle2 className="w-5 h-5" /> Next: Payment Setup</>
                     )}
                 </button>
                 <p className="text-xs text-slate-400 mt-4 text-center max-w-sm">
-                    By clicking Submit, you agree that all information provided is accurate and true.
+                    By clicking Next, you agree that all information provided is accurate and true.
                 </p>
             </div>
         </form>

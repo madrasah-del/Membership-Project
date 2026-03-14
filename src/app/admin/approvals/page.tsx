@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CheckCircle2, XCircle, Search, Filter, Clock } from 'lucide-react'
+import Link from 'next/link'
 import { ApprovalActions } from '@/components/admin/ApprovalActions'
 
 export default async function PendingApprovalsPage() {
@@ -57,7 +58,12 @@ export default async function PendingApprovalsPage() {
                                                 {member.first_name?.[0] || ''}{member.last_name?.[0] || ''}
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-slate-900">{member.first_name} {member.last_name}</p>
+                                                <Link 
+                                                    href={`/admin/members/${member.id}`}
+                                                    className="font-semibold text-slate-900 hover:text-brand-600 transition-colors"
+                                                >
+                                                    {member.first_name} {member.last_name}
+                                                </Link>
                                                 <p className="text-xs text-slate-500">{member.town}</p>
                                             </div>
                                         </div>

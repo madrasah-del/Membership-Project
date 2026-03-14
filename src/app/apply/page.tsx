@@ -35,6 +35,12 @@ export default async function ApplyPage() {
         redirect('/dashboard')
     }
 
+    const initialPersonalDetails = {
+        firstName: user?.user_metadata?.full_name?.split(' ')[0] || user?.user_metadata?.first_name || '',
+        lastName: user?.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user?.user_metadata?.last_name || '',
+        email: user?.email || '',
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 relative pb-20">
 
@@ -60,7 +66,10 @@ export default async function ApplyPage() {
                     </p>
                 </header>
 
-                <ApplicationForm membershipFee={membershipFee} />
+                <ApplicationForm 
+                    membershipFee={membershipFee} 
+                    initialPersonalDetails={initialPersonalDetails} 
+                />
 
             </div>
         </div>

@@ -113,9 +113,9 @@ export default async function DashboardPage() {
                                     <div>
                                         <h3 className="font-semibold text-slate-900 text-lg">Payment Required</h3>
                                         <p className="text-slate-600 mt-1 leading-relaxed mb-4">Please complete your £10 annual membership payment to proceed with your application.</p>
-                                        <button className="bg-slate-900 hover:bg-slate-800 text-white font-medium px-5 py-2.5 rounded-xl transition-colors text-sm shadow-sm inline-flex items-center gap-2">
+                                        <Link href="/dashboard/payment" className="bg-slate-900 hover:bg-slate-800 text-white font-medium px-5 py-2.5 rounded-xl transition-colors text-sm shadow-sm inline-flex items-center gap-2">
                                             Pay Now
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             ) : (

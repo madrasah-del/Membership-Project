@@ -17,7 +17,8 @@ export const personalDetailsSchema = z.object({
         return age >= 18
     }, { message: 'You must be at least 18 years old to apply' }),
     profession: z.string().min(2, 'Profession is required'),
-    position: z.string().min(2, 'Position is required'),
+    functionalPosition: z.string().min(2, 'Functional area is required'),
+    position: z.string().min(2, 'Job title is required'),
     phone: z.string().min(10, 'Valid phone number is required'),
     email: z.string().email('Valid email is required'),
 })
@@ -46,11 +47,18 @@ export const eligibilitySchema = z.object({
         message: 'You must meet the residency or regular attendee criteria'
     }),
     isSunniMuslim: z.boolean().refine(val => val === true, {
-        message: 'You must confirm you are a Sunni Muslim'
+        message: 'You must declare that you are a Sunni Muslim'
     }),
+    hasGiftAidDeclaration: z.boolean().optional(),
+    whatsappOptIn: z.boolean(),
+    isNonResidentConfirmation: z.boolean().optional(),
+})
+
+export const postPaymentSchema = z.object({
+    photoUrl: z.string().optional(),
     proposedBy: z.string().optional(),
     secondedBy: z.string().optional(),
-    whatsappOptIn: z.boolean(),
+    committeeContactId: z.string().optional(),
 })
 
 export type PersonalDetailsData = z.infer<typeof personalDetailsSchema>
@@ -58,12 +66,12 @@ export type AddressData = z.infer<typeof addressSchema>
 export type PhotoData = z.infer<typeof photoSchema>
 export type DependentsData = z.infer<typeof dependentsSchema>
 export type EligibilityData = z.infer<typeof eligibilitySchema>
+export type PostPaymentData = z.infer<typeof postPaymentSchema>
 
-// Combined schema for final submission
+// Combined schema for final submission (initial stage)
 export const fullApplicationSchema = z.object({
     ...personalDetailsSchema.shape,
     ...addressSchema.shape,
-    ...photoSchema.shape,
     ...dependentsSchema.shape,
     ...eligibilitySchema.shape,
 })

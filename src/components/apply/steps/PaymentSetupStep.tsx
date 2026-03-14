@@ -6,12 +6,14 @@ import { Loader2, RefreshCw, CreditCard, Landmark, Banknote, Star, ChevronRight,
 export type PaymentSetupData = {
     paymentMethod: 'sumup' | 'bank_transfer' | 'cash'
     isRecurring: boolean
+    giftAidConsent: boolean
 }
 
 type PaymentSetupStepProps = {
     onNext: (data: PaymentSetupData) => void
     isSubmitting: boolean
     membershipFee?: number
+    initialData?: Partial<PaymentSetupData>
 }
 
 const PAYMENT_OPTIONS = [
@@ -73,8 +75,9 @@ const PAYMENT_OPTIONS = [
     },
 ]
 
-export default function PaymentSetupStep({ onNext, isSubmitting, membershipFee = 10.00 }: PaymentSetupStepProps) {
-    const [selectedOptionId, setSelectedOptionId] = useState<string>('sumup_recurring')
+export default function PaymentSetupStep({ onNext, isSubmitting, membershipFee = 10.00, initialData }: PaymentSetupStepProps) {
+    const [selectedOptionId, setSelectedOptionId] = useState<string>(initialData?.paymentMethod === 'sumup' ? (initialData.isRecurring ? 'sumup_recurring' : 'sumup_onetime') : initialData?.paymentMethod ?? 'sumup_recurring')
+    const [giftAidConsent, setGiftAidConsent] = useState(initialData?.giftAidConsent ?? true)
 
     const selectedOption = PAYMENT_OPTIONS.find(o => o.id === selectedOptionId)!
 
@@ -82,6 +85,7 @@ export default function PaymentSetupStep({ onNext, isSubmitting, membershipFee =
         onNext({
             paymentMethod: selectedOption.method,
             isRecurring: selectedOption.isRecurring,
+            giftAidConsent: giftAidConsent
         })
     }
 
@@ -141,6 +145,36 @@ export default function PaymentSetupStep({ onNext, isSubmitting, membershipFee =
                         </button>
                     )
                 })}
+            </div>
+
+            {/* Gift Aid Toggle */}
+            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                            <Star className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-emerald-900">Boost your gift by 25%</h3>
+                            <p className="text-xs text-emerald-700">Add Gift Aid at no extra cost to you.</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setGiftAidConsent(!giftAidConsent)}
+                        className={`w-12 h-6 rounded-full transition-colors relative flex-shrink-0 ${giftAidConsent ? 'bg-emerald-600' : 'bg-slate-300'}`}
+                    >
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${giftAidConsent ? 'left-7' : 'left-1'}`} />
+                    </button>
+                </div>
+
+                {giftAidConsent && (
+                    <div className="bg-white/60 rounded-xl p-4 border border-emerald-100/50">
+                        <p className="text-xs text-slate-700 leading-relaxed italic">
+                            "I want to Gift Aid my donation and any donations I make in the future or have made in the past 4 years to the Society. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference."
+                        </p>
+                    </div>
+                )}
             </div>
 
             <button

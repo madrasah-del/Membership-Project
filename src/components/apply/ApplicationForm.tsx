@@ -2,28 +2,28 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, ChevronRight, Loader2, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react'
 
 // Step Components
 import { PersonalDetailsStep } from './steps/PersonalDetailsStep'
 import { AddressStep } from './steps/AddressStep'
-import { PhotoUploadStep } from './steps/PhotoUploadStep'
 import { DependentsStep } from './steps/DependentsStep'
 import { EligibilityStep } from './steps/EligibilityStep'
-import PaymentSetupStep, { PaymentSetupData } from './steps/PaymentSetupStep'
+import PaymentSetupStep from './steps/PaymentSetupStep'
+import { PostPaymentStep } from './steps/PostPaymentStep'
 import SumUpCheckoutWidget from './steps/SumUpCheckoutWidget'
 
 // Actions and Validations
-import { submitApplication } from '@/app/apply/actions'
-import { PersonalDetailsData, AddressData, PhotoData, DependentsData, EligibilityData } from '@/lib/validations'
+import { submitApplication, recordPaymentSuccess } from '@/app/apply/actions'
+import { PersonalDetailsData, AddressData, DependentsData, EligibilityData } from '@/lib/validations'
 
 const STEPS = [
     { id: 'personal', title: 'Personal Details' },
     { id: 'address', title: 'Contact & Address' },
-    { id: 'photo', title: 'Profile Photo' },
     { id: 'dependents', title: 'Dependents' },
     { id: 'eligibility', title: 'Eligibility' },
     { id: 'payment', title: 'Payment Setup' },
+    { id: 'post-payment', title: 'Final Details' },
 ]
 
 export default function ApplicationForm({
@@ -37,35 +37,33 @@ export default function ApplicationForm({
     const [currentStep, setCurrentStep] = useState(0)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [membershipId, setMembershipId] = useState<string | null>(null)
 
     // SumUp State
     const [sumupCheckoutId, setSumupCheckoutId] = useState<string | null>(null)
     const [isAwaitingSumUp, setIsAwaitingSumUp] = useState(false)
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null)
 
     // Form State
     const [personalDetails, setPersonalDetails] = useState<Partial<PersonalDetailsData>>(initialPersonalDetails)
     const [addressDetails, setAddressDetails] = useState<Partial<AddressData>>({})
-    const [photoDetails, setPhotoDetails] = useState<Partial<PhotoData>>({})
     const [dependentsDetails, setDependentsDetails] = useState<Partial<DependentsData>>({ dependents: [] })
     const [eligibilityDetails, setEligibilityDetails] = useState<Partial<EligibilityData>>({
         whatsappOptIn: false,
         isResidentOrRegular: false,
         isSunniMuslim: false
     })
-    const [paymentSetup, setPaymentSetup] = useState<Partial<PaymentSetupData>>({})
 
     const handleNext = async (data: any) => {
         // Save current step data
         if (currentStep === 0) setPersonalDetails(data)
         if (currentStep === 1) setAddressDetails(data)
-        if (currentStep === 2) setPhotoDetails(data)
-        if (currentStep === 3) setDependentsDetails(data)
-        if (currentStep === 4) setEligibilityDetails(data)
+        if (currentStep === 2) setDependentsDetails(data)
+        if (currentStep === 3) setEligibilityDetails(data)
 
-        // Final submission if last step (payment step)
-        if (currentStep === STEPS.length - 1) {
-            setPaymentSetup(data)
-            await handleSubmit(data as PaymentSetupData)
+        // Final submission if at payment step
+        if (currentStep === 4) {
+            await handleSubmit(data)
         } else {
             setCurrentStep((prev) => prev + 1)
             window.scrollTo(0, 0)
@@ -73,54 +71,63 @@ export default function ApplicationForm({
     }
 
     const handleBack = () => {
+        // Don't allow going back from post-payment if they paid
+        if (currentStep === 5) return
         setCurrentStep((prev) => Math.max(0, prev - 1))
         window.scrollTo(0, 0)
     }
 
-    const handleSubmit = async (finalPaymentData: PaymentSetupData) => {
+    const handleSubmit = async (finalPaymentData: any) => {
         setIsSubmitting(true)
         setError(null)
 
         const fullData = {
             ...personalDetails,
             ...addressDetails,
-            ...photoDetails,
             ...dependentsDetails,
             ...eligibilityDetails,
             paymentMethod: finalPaymentData.paymentMethod,
             isRecurring: finalPaymentData.isRecurring,
+            hasGiftAidDeclaration: finalPaymentData.giftAidConsent,
         }
 
         try {
-            const result = await submitApplication(fullData)
+            const result = await submitApplication(fullData as any)
             if (result.error) {
                 setError(result.error)
-            } else if (finalPaymentData.paymentMethod === 'sumup' && result.membershipId && result.amount) {
-                // Initialize SumUp Checkout API
-                const sumupRes = await fetch('/api/sumup/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        amount: result.amount,
-                        membershipId: result.membershipId,
-                        email: personalDetails.email,
-                        name: result.applicantName,
-                        isRecurring: finalPaymentData.isRecurring // Add this flag
-                    })
-                })
-                const sumupData = await sumupRes.json()
-                if (!sumupRes.ok || !sumupData.checkoutId) {
-                    setError(sumupData.error || 'Failed to initialize payment gateway')
-                    return
-                }
-                setSumupCheckoutId(sumupData.checkoutId)
-                setIsAwaitingSumUp(true)
+                setIsSubmitting(false)
             } else {
-                router.push('/dashboard')
+                setMembershipId(result.membershipId || null)
+                setSelectedPaymentMethod(finalPaymentData.paymentMethod)
+                
+                if (finalPaymentData.paymentMethod === 'sumup' && result.membershipId && result.amount) {
+                    // Initialize SumUp Checkout API
+                    const sumupRes = await fetch('/api/sumup/checkout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            amount: result.amount,
+                            membershipId: result.membershipId,
+                            email: personalDetails.email,
+                            name: result.applicantName,
+                            isRecurring: finalPaymentData.isRecurring
+                        })
+                    })
+                    const sumupData = await sumupRes.json()
+                    if (!sumupRes.ok || !sumupData.checkoutId) {
+                        setError(sumupData.error || 'Failed to initialize payment gateway')
+                        setIsSubmitting(false)
+                        return
+                    }
+                    setSumupCheckoutId(sumupData.checkoutId)
+                    setIsAwaitingSumUp(true)
+                } else {
+                    // For non-sumup, go to post-payment directly
+                    setCurrentStep(5)
+                }
             }
-        } catch (e) {
+        } catch {
             setError('An unexpected error occurred while saving your application.')
-        } finally {
             setIsSubmitting(false)
         }
     }
@@ -164,7 +171,7 @@ export default function ApplicationForm({
 
                 {/* Step Header */}
                 <div className="bg-slate-50/50 border-b border-slate-100 p-6 flex items-center gap-4">
-                    {currentStep > 0 && (
+                    {currentStep > 0 && currentStep < 5 && (
                         <button
                             onClick={handleBack}
                             disabled={isSubmitting}
@@ -175,7 +182,11 @@ export default function ApplicationForm({
                     )}
                     <div>
                         <h2 className="text-xl font-bold text-slate-900">Step {currentStep + 1}: {STEPS[currentStep].title}</h2>
-                        <p className="text-slate-500 text-sm mt-0.5">Please provide accurate information to complete your application.</p>
+                        <p className="text-slate-500 text-sm mt-0.5">
+                            {currentStep === 5 
+                                ? "Great! Almost done. Help the committee get to know you." 
+                                : "Please provide accurate information to complete your application."}
+                        </p>
                     </div>
                 </div>
 
@@ -201,38 +212,46 @@ export default function ApplicationForm({
                         />
                     )}
                     {currentStep === 2 && (
-                        <PhotoUploadStep
-                            initialData={photoDetails}
-                            onNext={handleNext}
-                        />
-                    )}
-                    {currentStep === 3 && (
                         <DependentsStep
                             initialData={dependentsDetails}
                             onNext={handleNext}
                         />
                     )}
-                    {currentStep === 4 && (
+                    {currentStep === 3 && (
                         <EligibilityStep
                             initialData={eligibilityDetails}
                             onNext={handleNext}
                             isSubmitting={isSubmitting}
+                            isEpsomResident={
+                                addressDetails.town?.toLowerCase().includes('epsom') || 
+                                ['KT17', 'KT18', 'KT19'].some(pc => addressDetails.postcode?.toUpperCase().startsWith(pc))
+                            }
                         />
                     )}
-                    {currentStep === 5 && !isAwaitingSumUp && (
+                    {currentStep === 4 && !isAwaitingSumUp && (
                         <PaymentSetupStep
                             onNext={handleNext}
                             isSubmitting={isSubmitting}
                             membershipFee={membershipFee + ((dependentsDetails.dependents?.length || 0) * membershipFee)}
                         />
                     )}
+                    {currentStep === 5 && membershipId && (
+                        <PostPaymentStep
+                            membershipId={membershipId}
+                            paymentMethod={selectedPaymentMethod || 'bank_transfer'}
+                            onComplete={() => router.push('/dashboard')}
+                        />
+                    )}
                     {isAwaitingSumUp && sumupCheckoutId && (
                         <SumUpCheckoutWidget
                             checkoutId={sumupCheckoutId}
-                            onComplete={(status, transactionId) => {
-                                if (status === 'SUCCESS') {
-                                    router.push('/dashboard')
-                                } else {
+                            onComplete={async (status, transactionId) => {
+                                if (status === 'SUCCESS' && membershipId) {
+                                    await recordPaymentSuccess(membershipId, transactionId || 'sumup_success_no_id')
+                                    setIsAwaitingSumUp(false)
+                                    setCurrentStep(5)
+                                    window.scrollTo(0, 0)
+                                } else if (status === 'FAILED') {
                                     setIsAwaitingSumUp(false)
                                     setSumupCheckoutId(null)
                                 }

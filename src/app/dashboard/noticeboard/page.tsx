@@ -1,113 +1,85 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { Megaphone, Calendar, FileText, Bell } from 'lucide-react'
+import { Megaphone, Pin, Link as LinkIcon, MessageSquare } from 'lucide-react'
 
 export default async function NoticeboardPage() {
-    const supabase = await createClient()
+  const supabase = await createClient()
 
-    const { data: { user } } = await supabase.auth.getUser()
+  // Fetch published society updates
+  const { data: notices, error } = await supabase
+    .from('society_updates')
+    .select('*')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
 
-    if (!user) {
-        redirect('/login')
-    }
+  if (error) {
+    console.error('Error fetching notices:', error)
+  }
 
-    // Check if member is active
-    const { data: membership } = await supabase
-        .from('memberships')
-        .select('status')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-    if (!membership || membership.status !== 'active') {
-        return (
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 sm:p-12 text-center animate-fade-in">
-                <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <Bell className="w-8 h-8 text-slate-400" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-3">Noticeboard Unavailable</h2>
-                <p className="text-slate-500 max-w-lg mx-auto text-lg">
-                    The noticeboard is only available to active, fully paid members of the society. Please ensure your membership is up to date to access community updates.
-                </p>
-            </div>
-        )
-    }
-
-    // Fetch society updates
-    const { data: updates } = await supabase
-        .from('society_updates')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-    const getIconForType = (type: string) => {
-        switch (type) {
-            case 'newsletter': return <FileText className="w-5 h-5 text-blue-500" />
-            case 'announcement': return <Megaphone className="w-5 h-5 text-brand-500" />
-            case 'financial': return <Calendar className="w-5 h-5 text-green-500" />
-            default: return <Bell className="w-5 h-5 text-slate-500" />
-        }
-    }
-
-    const getBgColorForType = (type: string) => {
-        switch (type) {
-            case 'newsletter': return 'bg-blue-50'
-            case 'announcement': return 'bg-brand-50'
-            case 'financial': return 'bg-green-50'
-            default: return 'bg-slate-50'
-        }
-    }
-
-    return (
-        <div className="animate-fade-in-up">
-            <div className="mb-10 lg:flex lg:items-center lg:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Noticeboard</h1>
-                    <p className="text-slate-500 mt-2 text-lg">Society-wide updates, announcements, and newsletters.</p>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                {!updates?.length ? (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
-                        No recent updates to show. Check back later!
-                    </div>
-                ) : (
-                    updates.map((update: any) => (
-                        <div key={update.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-                            <div className="p-6 sm:p-8">
-                                <div className="flex items-start gap-4">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${getBgColorForType(update.type)}`}>
-                                        {getIconForType(update.type)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                                {update.type}
-                                            </span>
-                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                            <span className="text-sm text-slate-500">
-                                                {new Date(update.created_at).toLocaleDateString(undefined, {
-                                                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-                                                })}
-                                            </span>
-                                        </div>
-                                        <h2 className="text-xl font-bold text-slate-900 mb-3">{update.title}</h2>
-                                        <div className="prose prose-slate prose-sm max-w-none text-slate-600">
-                                            {/* Simple text rendering for now. Could use a markdown parser later. */}
-                                            {update.content.split('\n').map((paragraph: string, idx: number) => (
-                                                <p key={idx}>{paragraph}</p>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Noticeboard</h1>
+          <p className="text-slate-500 mt-2">Central hub for all community notices and official memos.</p>
         </div>
-    )
+        <div className="flex gap-2">
+           <button className="bg-brand-50 text-brand-700 font-bold py-2.5 px-5 rounded-xl text-sm hover:bg-brand-100 transition-colors flex items-center gap-2">
+             <MessageSquare className="w-4 h-4" />
+             Suggest a Notice
+           </button>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-8">
+        {notices && notices.length > 0 ? (
+          notices.map((notice) => (
+            <div key={notice.id} className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all group relative overflow-hidden">
+               {notice.type === 'announcement' && (
+                 <div className="absolute top-0 right-0 py-1.5 px-4 bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded-bl-xl shadow-sm">
+                   Priority
+                 </div>
+               )}
+               
+               <div className="flex items-center gap-3 mb-6">
+                  <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-lg uppercase tracking-wider">
+                    {notice.type}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">{new Date(notice.created_at).toLocaleDateString()}</span>
+               </div>
+
+               <h2 className="text-2xl font-black text-slate-900 mb-4 group-hover:text-brand-600 transition-colors">
+                 {notice.title}
+               </h2>
+               
+               <p className="text-slate-600 leading-relaxed mb-8 whitespace-pre-wrap">
+                 {notice.content}
+               </p>
+
+               <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase">
+                      EE
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700">EEIS Committee</span>
+                  </div>
+                  <button className="text-slate-400 hover:text-brand-600 transition-colors">
+                    <LinkIcon className="w-5 h-5" />
+                  </button>
+               </div>
+            </div>
+          ))
+        ) : (
+          <div className="md:col-span-2 bg-white rounded-[2.5rem] p-16 border-2 border-dashed border-slate-100 text-center flex flex-col items-center">
+             <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200 mb-6 font-black text-2xl">
+               <Megaphone className="w-10 h-10" />
+             </div>
+             <h3 className="text-2xl font-black text-slate-900 mb-2">No Active Notices</h3>
+             <p className="text-slate-500 max-w-sm">
+               There are currently no community updates posted. Check back later for news and announcements.
+             </p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }

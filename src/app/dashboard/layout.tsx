@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LogOut, User, Settings, FileText, ChevronRight, CreditCard } from 'lucide-react'
+import { LogOut, User, Settings, FileText, ChevronRight, CreditCard, Bell, ClipboardList, Vote } from 'lucide-react'
 import Link from 'next/link'
 import { signout } from '@/app/login/actions'
 
@@ -49,6 +49,21 @@ export default async function DashboardLayout({
                     <Link href="/dashboard/payments" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
                         <CreditCard className="w-5 h-5 text-slate-400" />
                         Payments & Subscriptions
+                    </Link>
+
+                    <Link href="/dashboard/noticeboard" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
+                        <ClipboardList className="w-5 h-5 text-slate-400" />
+                        Noticeboard
+                    </Link>
+
+                    <Link href="/dashboard/elections" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
+                        <Vote className="w-5 h-5 text-slate-400" />
+                        Elections & Voting
+                    </Link>
+
+                    <Link href="/dashboard/notifications" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
+                        <Bell className="w-5 h-5 text-slate-400" />
+                        Notifications
                     </Link>
 
                     <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">

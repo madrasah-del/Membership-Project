@@ -36,3 +36,9 @@ Based on the full requirements (including CRM, Finance, Volunteering, and Voting
 - [ ] **Notification Center:** Display individual messages sent by the Admin in the user's portal.
 - [ ] **WhatsApp Community Link:** Provide the secure WhatsApp invite link post-approval.
 - [ ] **OCR/AI Integration (Admin tool):** Auto-fill the manual entry form from scanned PDF/Image forms using vision APIs, then send the user a link to claim their logged-in account.
+
+## 🎁 Area 4: Donations & Gift Aid (Assign to Agent 4)
+*Focus: Fundraising and tax-efficient giving.*
+- [ ] **Donation Portal:** Create a dedicated section for one-off and recurring donations.
+- [ ] **Gift Aid Declaration:** Implement a digital Gift Aid declaration form.
+- [ ] **Donation Matching:** Build a system to match donations with their respective Gift Aid status for HMRC reporting.

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LogOut, Users, FileText, CheckSquare, Search, ChevronRight } from 'lucide-react'
+import { LogOut, Users, FileText, CheckSquare, Search, ChevronRight, Megaphone, Vote, Bell, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { signout } from '@/app/login/actions'
 
@@ -72,9 +72,28 @@ export default async function AdminLayout({
                         Manual Entry
                     </Link>
 
+                    <div className="pt-4 pb-2 px-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Communication & Voting</p>
+                    </div>
+
+                    <Link href="/admin/noticeboard" className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
+                        <Megaphone className="w-5 h-5 text-slate-500" />
+                        Noticeboard
+                    </Link>
+
+                    <Link href="/admin/voting" className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
+                        <Vote className="w-5 h-5 text-slate-500" />
+                        Elections & Voting
+                    </Link>
+
+                    <Link href="/admin/notifications" className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
+                        <Bell className="w-5 h-5 text-slate-500" />
+                        Notifications
+                    </Link>
+
                     <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 hover:text-white rounded-xl font-medium transition-colors">
-                        <Users className="w-5 h-5 text-slate-500" />
-                        Settings
+                        <Settings className="w-5 h-5 text-slate-500" />
+                        System Settings
                     </Link>
                 </nav>
 

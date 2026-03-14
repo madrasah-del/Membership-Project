@@ -103,8 +103,6 @@ export async function confirmReconciliationMatch(membershipId: string, amount: n
     }
 
     // 2. Update membership status if needed (e.g. pending_payment -> pending_approval)
-    // The exact flow might require checking if approval is needed, but we'll set to pending_approval or active as a step forward.
-    // Assuming they need committee approval after payment:
     const { error: updateError } = await supabase
         .from('memberships')
         .update({ status: 'pending_approval' })
@@ -115,4 +113,66 @@ export async function confirmReconciliationMatch(membershipId: string, amount: n
     }
 
     return { success: true }
+}
+
+export async function linkSumUpTransaction(membershipId: string, sumupTransaction: any) {
+    const supabase = await createClient()
+
+    // 1. Get member details
+    const { data: membership } = await supabase
+        .from('memberships')
+        .select('user_id')
+        .eq('id', membershipId)
+        .single()
+
+    if (!membership) return { error: 'Membership not found' }
+
+    // 2. Check for active Gift Aid declaration
+    const { data: declaration } = await supabase
+        .from('gift_aid_declarations')
+        .select('id')
+        .eq('user_id', membership.user_id)
+        .eq('status', 'active')
+        .maybeSingle()
+
+    // 3. Create a donation record for this SumUp transaction
+    // This allows us to track it for Gift Aid HMRC claims later
+    const { error: donationError } = await supabase
+        .from('donations')
+        .insert({
+            user_id: membership.user_id,
+            amount: sumupTransaction.amount,
+            currency: sumupTransaction.currency,
+            status: 'successful',
+            payment_method: 'sumup',
+            source: 'terminal',
+            sumup_transaction_id: sumupTransaction.transaction_id,
+            gift_aid_declaration_id: declaration?.id || null,
+            is_gift_aid_eligible: !!declaration,
+            created_at: sumupTransaction.timestamp || new Date().toISOString()
+        })
+
+    if (donationError) {
+        console.error('Error linking SumUp transaction:', donationError)
+        return { error: 'Failed to create donation record for reconciliation.' }
+    }
+
+    return { success: true }
+}
+
+export async function searchMemberships(query: string) {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase
+        .from('memberships')
+        .select('id, first_name, last_name, status')
+        .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%`)
+        .limit(10)
+
+    if (error) {
+        console.error('Error searching memberships:', error)
+        return []
+    }
+
+    return data
 }

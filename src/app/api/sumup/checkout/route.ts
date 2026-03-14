@@ -3,17 +3,18 @@ import { NextResponse } from 'next/server'
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const { amount, membershipId, email, name, isRecurring } = body
+        const { amount, membershipId, email, name, isRecurring, description, reference, metadata } = body
 
-        if (!amount || !membershipId) {
+        if (!amount || (!membershipId && !metadata?.donation_id)) {
             return NextResponse.json(
-                { error: 'Amount and membershipId are required' },
+                { error: 'Amount and a Target (Membership or Donation) are required' },
                 { status: 400 }
             )
         }
 
         const sumupSecretKey = process.env.SUMUP_SECRET_KEY
         const merchantCode = process.env.NEXT_PUBLIC_SUMUP_MERCHANT_CODE
+        const merchantEmail = process.env.SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk'
 
         if (!sumupSecretKey || !merchantCode) {
             return NextResponse.json(
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
             )
         }
 
-        const customerId = `eeis-m-${membershipId}`
+        const customerId = membershipId ? `eeis-m-${membershipId}` : `eeis-d-${metadata?.donation_id || Date.now()}`
 
         if (isRecurring) {
             // Ensure a customer exists for card tokenization
@@ -37,22 +38,25 @@ export async function POST(request: Request) {
                     personal_details: {
                         first_name: name?.split(' ')[0] || 'Member',
                         last_name: name?.split(' ').slice(1).join(' ') || 'EEIS',
-                        email: email || process.env.NEXT_PUBLIC_SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk'
+                        email: email || merchantEmail
                     }
                 })
             })
         }
 
         // Generate a unique checkout reference
-        const checkoutReference = `CHK-${membershipId}-${Date.now()}`
+        const prefix = isRecurring ? 'SUB_' : 'MEM_'
+        const checkoutReference = reference || (membershipId 
+            ? `${prefix}${membershipId}__${Date.now()}` 
+            : `DON_${metadata?.donation_id || 'NONE'}__${Date.now()}`)
 
         const sumupPayload: any = {
             checkout_reference: checkoutReference,
             amount: amount,
             currency: 'GBP',
-            pay_to_email: email || process.env.NEXT_PUBLIC_SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk', // Fallback
+            pay_to_email: merchantEmail,
             merchant_code: merchantCode,
-            description: `Online Membership Application - ${name || membershipId}`,
+            description: description || `Online Membership Application - ${name || membershipId}`,
         }
 
         if (isRecurring) {

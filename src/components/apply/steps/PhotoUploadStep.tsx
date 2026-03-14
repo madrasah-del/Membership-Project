@@ -12,15 +12,71 @@ interface Props {
 export function PhotoUploadStep({ initialData, onNext }: Props) {
     const [photoUrl, setPhotoUrl] = useState<string | undefined>(initialData.photoUrl)
     const [isUploading, setIsUploading] = useState(false)
+    const [isCameraActive, setIsCameraActive] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const canvasRef = useRef<HTMLCanvasElement>(null)
 
     const supabase = createClient()
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
+        await uploadFile(file)
+    }
 
+    const startCamera = async () => {
+        try {
+            setError(null)
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'user', width: { ideal: 1024 }, height: { ideal: 1024 } } 
+            })
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream
+                setIsCameraActive(true)
+            }
+        } catch (err) {
+            console.error('Camera Error:', err)
+            setError('Could not access camera. Please check permissions or upload a file instead.')
+        }
+    }
+
+    const stopCamera = () => {
+        if (videoRef.current?.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream
+            stream.getTracks().forEach(track => track.stop())
+            videoRef.current.srcObject = null
+        }
+        setIsCameraActive(false)
+    }
+
+    const capturePhoto = () => {
+        if (!videoRef.current || !canvasRef.current) return
+
+        const video = videoRef.current
+        const canvas = canvasRef.current
+        const context = canvas.getContext('2d')
+        if (!context) return
+
+        // Set canvas to video dimensions
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+
+        // Draw current frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+        // Convert to blob and upload
+        canvas.toBlob(async (blob) => {
+            if (blob) {
+                const capturedFile = new File([blob], 'selfie.jpg', { type: 'image/jpeg' })
+                stopCamera()
+                await uploadFile(capturedFile)
+            }
+        }, 'image/jpeg', 0.9)
+    }
+
+    const uploadFile = async (file: File) => {
         // Basic validation
         if (!file.type.startsWith('image/')) {
             setError('Please upload a valid image file (JPEG, PNG).')
@@ -92,7 +148,33 @@ export function PhotoUploadStep({ initialData, onNext }: Props) {
 
             <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-200 rounded-3xl bg-white hover:border-brand-300 hover:bg-brand-50/30 transition-all text-center">
 
-                {photoUrl ? (
+                {isCameraActive ? (
+                    <div className="relative w-full max-w-md mx-auto aspect-square overflow-hidden rounded-3xl border-4 border-white shadow-2xl bg-black">
+                        <video 
+                            ref={videoRef} 
+                            autoPlay 
+                            playsInline 
+                            className="w-full h-full object-cover"
+                        />
+                        <canvas ref={canvasRef} className="hidden" />
+                        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-4 px-6">
+                            <button
+                                type="button"
+                                onClick={stopCamera}
+                                className="px-5 py-2.5 bg-white/20 backdrop-blur-md text-white border border-white/30 rounded-xl font-medium hover:bg-white/30 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={capturePhoto}
+                                className="px-8 py-2.5 bg-brand-600 text-white rounded-xl font-medium shadow-lg shadow-brand-600/40 hover:bg-brand-700 transition-all transform active:scale-95"
+                            >
+                                Capture Photo
+                            </button>
+                        </div>
+                    </div>
+                ) : photoUrl ? (
                     <div className="relative group">
                         <div className="w-32 h-32 md:w-40 md:h-40 relative rounded-full overflow-hidden border-4 border-white shadow-xl">
                             <Image
@@ -117,31 +199,44 @@ export function PhotoUploadStep({ initialData, onNext }: Props) {
                     </div>
                 )}
 
-                <div className="mt-6">
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                        id="photo-upload"
-                    />
-                    <label
-                        htmlFor="photo-upload"
-                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium cursor-pointer transition-all
-              ${isUploading ? 'bg-slate-100 text-slate-400 pointer-events-none' :
-                                photoUrl ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' :
-                                    'bg-brand-50 text-brand-700 hover:bg-brand-100'}`}
-                    >
-                        {isUploading ? (
-                            <>Uploading...</>
-                        ) : photoUrl ? (
-                            'Change Photo'
-                        ) : (
-                            <><Upload className="w-4 h-4" /> Upload Photo</>
-                        )}
-                    </label>
-                </div>
+                {!isCameraActive && (
+                    <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                        <button
+                            type="button"
+                            onClick={startCamera}
+                            disabled={isUploading}
+                            className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all
+                                ${isUploading ? 'bg-slate-100 text-slate-400 pointer-events-none' : 
+                                'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20'}`}
+                        >
+                            <Camera className="w-5 h-5" /> Take Selfie
+                        </button>
+
+                        <div className="relative">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                className="hidden"
+                                id="photo-upload"
+                            />
+                            <label
+                                htmlFor="photo-upload"
+                                className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium cursor-pointer transition-all border
+                                    ${isUploading ? 'bg-slate-100 text-slate-400 pointer-events-none border-transparent' :
+                                    photoUrl ? 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50' :
+                                    'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                            >
+                                {isUploading ? (
+                                    <>Uploading...</>
+                                ) : (
+                                    <><Upload className="w-5 h-5" /> {photoUrl ? 'Change File' : 'Upload File'}</>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+                )}
 
                 {!photoUrl && (
                     <p className="text-xs text-slate-400 mt-4 max-w-xs">
