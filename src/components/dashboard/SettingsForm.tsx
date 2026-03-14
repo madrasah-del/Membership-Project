@@ -11,6 +11,7 @@ interface SettingsFormProps {
   initialPhone: string
   initialProfession: string
   initialPosition: string
+  initialFunctionalPosition: string
   initialNewsletterOptIn: boolean
   initialWhatsappOptIn: boolean
   initialBusinessOptIn: boolean
@@ -25,6 +26,7 @@ export default function SettingsForm(props: SettingsFormProps) {
   const [phone, setPhone] = useState(props.initialPhone)
   const [profession, setProfession] = useState(props.initialProfession)
   const [position, setPosition] = useState(props.initialPosition)
+  const [functionalPosition, setFunctionalPosition] = useState(props.initialFunctionalPosition)
   const [newsletter, setNewsletter] = useState(props.initialNewsletterOptIn)
   const [whatsapp, setWhatsapp] = useState(props.initialWhatsappOptIn)
   
@@ -57,6 +59,7 @@ export default function SettingsForm(props: SettingsFormProps) {
         business_website: businessWebsite,
         business_contact: businessContact,
         business_description: businessDescription,
+        functional_position: functionalPosition,
       })
       if (result.success) {
         setSuccessMsg('Preferences updated successfully.')
@@ -120,9 +123,19 @@ export default function SettingsForm(props: SettingsFormProps) {
             <label className="text-sm font-semibold text-slate-700">Profession</label>
             <input type="text" value={profession} onChange={e => setProfession(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" />
           </div>
-          <div className="space-y-2 sm:col-span-2">
+          <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Position / Job Title</label>
             <input type="text" value={position} onChange={e => setPosition(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700">Functional Area (Business/Profession)</label>
+            <input 
+              type="text" 
+              placeholder="e.g. Finance, Healthcare, Engineering"
+              value={functionalPosition} 
+              onChange={e => setFunctionalPosition(e.target.value)} 
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all" 
+            />
           </div>
         </div>
       </div>

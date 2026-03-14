@@ -41,6 +41,7 @@ export default async function SettingsPage() {
         initialBusinessContact={membership?.business_contact || ''}
         initialBusinessWebsite={membership?.business_website || ''}
         initialBusinessDescription={membership?.business_description || ''}
+        initialFunctionalPosition={membership?.functional_position || ''}
       />
     </div>
   )
