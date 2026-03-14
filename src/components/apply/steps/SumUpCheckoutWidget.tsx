@@ -33,7 +33,15 @@ export default function SumUpCheckoutWidget({ checkoutId, onComplete }: SumUpChe
                                 onComplete('SUCCESS', body?.transaction_code)
                             } else {
                                 onComplete('FAILED')
-                                setError('Payment failed or was cancelled. Please try again.')
+                                let errorMessage = 'Payment failed or was cancelled. Please try again.'
+                                if (body?.message) {
+                                    errorMessage = `Payment declined: ${body.message}`
+                                } else if (body?.transaction_code) {
+                                    errorMessage = `Payment failed (Ref: ${body.transaction_code}).`
+                                } else if (type) {
+                                    errorMessage = `Payment failed (Type: ${type}). Please try again.`
+                                }
+                                setError(errorMessage)
                             }
                         },
                         // Additional optional config
