@@ -232,7 +232,7 @@ export default function ManualEntryPage() {
     )
 }
 
-function Activity(props: any) {
+function Activity(props: Record<string, unknown>) {
   return (
     <svg
       {...props}

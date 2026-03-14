@@ -35,7 +35,7 @@ export default function LearnMorePage() {
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-4">Education</h3>
           <p className="text-slate-600 text-sm leading-relaxed">
-            From children's Madrasah to adult circles, our educational programs aim to foster deep understanding and practice of Islam.
+            From children&apos;s Madrasah to adult circles, our educational programs aim to foster deep understanding and practice of Islam.
           </p>
         </div>
 

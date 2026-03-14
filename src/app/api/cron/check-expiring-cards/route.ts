@@ -47,7 +47,7 @@ export async function GET(request: Request) {
         if (membershipError) throw membershipError;
 
         let notificationsSent = 0;
-        let errors = [];
+        const errors = [];
 
         // Determine target expiry month (e.g., next month. If it's currently March, we check for cards expiring in April)
         const now = new Date()
@@ -109,8 +109,8 @@ export async function GET(request: Request) {
                         break; // Sent notification for this user, move to next user
                     }
                 }
-            } catch (err: any) {
-                errors.push(`Failed for user ${membership.user_id}: ${err.message}`)
+            } catch (err: unknown) {
+                errors.push(`Failed for user ${membership.user_id}: ${err instanceof Error ? err.message : String(err)}`)
             }
         }
 
@@ -119,9 +119,9 @@ export async function GET(request: Request) {
             notificationsSent,
             errors: errors.length > 0 ? errors : undefined
         })
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Check expiring cards error:', error)
-        return NextResponse.json({ error: error.message }, { status: 500 })
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 })
     }
 }
 

@@ -21,8 +21,8 @@ export default function ForgotPasswordPage() {
             } else {
                 setIsSubmitted(true)
             }
-        } catch (e: any) {
-            setError(e.message || 'An unexpected error occurred. Please try again.')
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'An unexpected error occurred. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
                             E
                         </div>
                         <h1 className="text-2xl font-bold text-slate-900">Reset Password</h1>
-                        <p className="text-slate-500 text-sm mt-1">We'll send a recovery link to your email</p>
+                        <p className="text-slate-500 text-sm mt-1">We&apos;ll send a recovery link to your email</p>
                     </div>
                 </div>
 
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
                         </div>
                         <h2 className="text-xl font-bold text-slate-900 mb-2">Check your email</h2>
                         <p className="text-slate-600 mb-6">
-                            We've sent a password reset link to your email address. Please check your inbox and spam folder.
+                            We&apos;ve sent a password reset link to your email address. Please check your inbox and spam folder.
                         </p>
                         <Link
                             href="/login"

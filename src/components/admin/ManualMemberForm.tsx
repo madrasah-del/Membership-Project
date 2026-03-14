@@ -54,7 +54,7 @@ export function ManualMemberForm({ onSuccess, onCancel }: ManualMemberFormProps)
             hasGiftAidDeclaration: false,
             whatsappOptIn: false,
             isNonResidentConfirmation: false,
-            dependents: [] as any[]
+            dependents: [] as Array<{ name: string; relation: string; mobile: string; email: string }>
         }
     })
 
@@ -70,7 +70,7 @@ export function ManualMemberForm({ onSuccess, onCancel }: ManualMemberFormProps)
         setValue('dependents', newDeps)
     }
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: Record<string, unknown>) => {
         setIsSubmitting(true)
         setError(null)
         try {
@@ -81,8 +81,8 @@ export function ManualMemberForm({ onSuccess, onCancel }: ManualMemberFormProps)
                 setSuccess(true)
                 if (onSuccess) setTimeout(onSuccess, 2000)
             }
-        } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred')
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An unexpected error occurred')
         } finally {
             setIsSubmitting(false)
         }
@@ -431,7 +431,7 @@ export function ManualMemberForm({ onSuccess, onCancel }: ManualMemberFormProps)
                                         <button
                                             key={method}
                                             type="button"
-                                            onClick={() => setValue('paymentMethod', method as any)}
+                                            onClick={() => setValue('paymentMethod', method)}
                                             className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border
                                                 ${watch('paymentMethod') === method 
                                                     ? 'bg-brand-600 border-brand-500 shadow-lg shadow-brand-500/20' 

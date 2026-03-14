@@ -54,7 +54,7 @@ export default async function AdminAuditPage() {
                         <tbody className="divide-y divide-slate-100">
                             {memberships?.map((member) => {
                                 const audit = yearAudits.find(a => a.membership_id === member.id)
-                                const emailStr = Array.isArray(member.profiles) ? member.profiles[0]?.email : (member.profiles as any)?.email
+                                const emailStr = Array.isArray(member.profiles) ? (member.profiles[0] as Record<string, unknown>)?.email as string : (member.profiles as Record<string, unknown>)?.email as string
 
                                 return (
                                     <tr key={member.id} className="hover:bg-slate-50 transition-colors">

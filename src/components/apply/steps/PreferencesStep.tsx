@@ -16,12 +16,12 @@ const DONATION_TYPES = [
     'Produce/food donors'
 ]
 
-export function PreferencesStep({ initialData, onNext }: { initialData: any, onNext: (data: any) => void }) {
-    const [willingToVolunteer, setWillingToVolunteer] = useState<boolean>(initialData.willingToVolunteer || false)
-    const [volunteerRoles, setVolunteerRoles] = useState<string[]>(initialData.volunteerRoles || [])
+export function PreferencesStep({ initialData, onNext }: { initialData: Record<string, unknown>, onNext: (data: Record<string, unknown>) => void }) {
+    const [willingToVolunteer, setWillingToVolunteer] = useState<boolean>((initialData.willingToVolunteer as boolean) || false)
+    const [volunteerRoles, setVolunteerRoles] = useState<string[]>((initialData.volunteerRoles as string[]) || [])
 
-    const [willingToDonate, setWillingToDonate] = useState<boolean>(initialData.willingToDonate || false)
-    const [donationTypes, setDonationTypes] = useState<string[]>(initialData.donationTypes || [])
+    const [willingToDonate, setWillingToDonate] = useState<boolean>((initialData.willingToDonate as boolean) || false)
+    const [donationTypes, setDonationTypes] = useState<string[]>((initialData.donationTypes as string[]) || [])
 
     const toggleRole = (role: string) => {
         setVolunteerRoles(prev =>

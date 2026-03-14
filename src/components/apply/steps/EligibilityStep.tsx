@@ -5,7 +5,7 @@ import { CheckCircle2, Info, Loader2 } from 'lucide-react'
 
 interface Props {
     initialData: Partial<EligibilityData>
-    onNext: (data: any) => void
+    onNext: (data: Record<string, unknown>) => void
     isSubmitting: boolean
     isEpsomResident?: boolean
 }

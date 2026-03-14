@@ -50,7 +50,7 @@ export async function POST(request: Request) {
             ? `${prefix}${membershipId}__${Date.now()}` 
             : `DON_${metadata?.donation_id || 'NONE'}__${Date.now()}`)
 
-        const sumupPayload: any = {
+        const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
             amount: amount,
             currency: 'GBP',

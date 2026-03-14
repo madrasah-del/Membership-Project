@@ -4,14 +4,28 @@ import { useState, useEffect } from 'react'
 import { Loader2, Search, Link as LinkIcon, CheckCircle2, AlertCircle, History } from 'lucide-react'
 import { searchMemberships, linkSumUpTransaction } from '@/app/admin/reconciliation/actions'
 
+interface SumUpTransaction {
+    transaction_id: string;
+    timestamp: string;
+    amount: number;
+    status: string;
+}
+
+interface MemberResult {
+    id: string;
+    first_name: string;
+    last_name: string;
+    status: string;
+}
+
 export function SumUpTransactionReconciler() {
-    const [transactions, setTransactions] = useState<any[]>([])
+    const [transactions, setTransactions] = useState<SumUpTransaction[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
-    const [searchResults, setSearchResults] = useState<any[]>([])
+    const [searchResults, setSearchResults] = useState<MemberResult[]>([])
     const [isSearching, setIsSearching] = useState(false)
-    const [linkingTransaction, setLinkingTransaction] = useState<any | null>(null)
+    const [linkingTransaction, setLinkingTransaction] = useState<SumUpTransaction | null>(null)
     const [isLinking, setIsLinking] = useState(false)
 
     useEffect(() => {
@@ -26,8 +40,8 @@ export function SumUpTransactionReconciler() {
             if (!res.ok) throw new Error('Failed to fetch transactions')
             const data = await res.json()
             setTransactions(data.items || [])
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An unexpected error occurred')
         } finally {
             setIsLoading(false)
         }
@@ -49,7 +63,7 @@ export function SumUpTransactionReconciler() {
         if (!linkingTransaction) return
         setIsLinking(true)
         try {
-            const res = await linkSumUpTransaction(membershipId, linkingTransaction)
+            const res = await linkSumUpTransaction(membershipId, linkingTransaction as unknown as Record<string, unknown>)
             if (res.error) {
                 alert(res.error)
             } else {

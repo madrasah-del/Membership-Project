@@ -80,7 +80,7 @@ export async function rejectMembership(membershipId: string) {
     return { success: true }
 }
 
-export async function createManualMembership(data: any) {
+export async function createManualMembership(data: Record<string, unknown>) {
     const supabase = await createClient()
 
     // Auth check
@@ -168,8 +168,8 @@ export async function createManualMembership(data: any) {
 
         revalidatePath('/admin')
         return { success: true, membershipId: membership.id }
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error('Manual entry error:', err)
-        return { error: err.message || 'Failed to create manual entry' }
+        return { error: err instanceof Error ? err.message : 'Failed to create manual entry' }
     }
 }

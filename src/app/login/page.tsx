@@ -300,7 +300,7 @@ export default function LoginPage() {
                                     placeholder="your@email.com"
                                 />
                             </div>
-                            <p className="text-[10px] text-slate-400 pl-1 mt-1">We'll send you a link that logs you in instantly without a password.</p>
+                            <p className="text-[10px] text-slate-400 pl-1 mt-1">We&apos;ll send you a link that logs you in instantly without a password.</p>
                         </div>
 
                         <button

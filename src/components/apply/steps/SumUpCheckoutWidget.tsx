@@ -17,20 +17,20 @@ export default function SumUpCheckoutWidget({ checkoutId, onComplete }: SumUpChe
     useEffect(() => {
         if (!isScriptLoaded || !checkoutId || !sumupWidgetRef.current) return
 
-        let sumupCard: any
+        let sumupCard: unknown
 
         const initSumUp = async () => {
             // TS ignore because SumUp injects global object
-            // @ts-ignore
+            // @ts-expect-error SumUp injects global object
             if (typeof window !== 'undefined' && window.SumUpCard) {
                 try {
-                    // @ts-ignore
+                    // @ts-expect-error SumUp injects global object
                     sumupCard = window.SumUpCard.mount({
                         checkoutId: checkoutId,
-                        onResponse: function (type: string, body: any) {
+                        onResponse: function (type: string, body: Record<string, unknown>) {
                             console.log('SumUp Response:', type, body)
                             if (type === 'success' || body?.status === 'PAID') {
-                                onComplete('SUCCESS', body?.transaction_code)
+                                onComplete('SUCCESS', body?.transaction_code as string | undefined)
                             } else {
                                 onComplete('FAILED')
                                 let errorMessage = 'Payment failed or was cancelled. Please try again.'
@@ -63,8 +63,8 @@ export default function SumUpCheckoutWidget({ checkoutId, onComplete }: SumUpChe
 
         return () => {
             // Cleanup if needed when unmounting
-            if (sumupCard && typeof sumupCard.unmount === 'function') {
-                sumupCard.unmount()
+            if (sumupCard && typeof (sumupCard as Record<string, unknown>).unmount === 'function') {
+                ((sumupCard as Record<string, unknown>).unmount as () => void)()
             }
         }
     }, [isScriptLoaded, checkoutId, onComplete])

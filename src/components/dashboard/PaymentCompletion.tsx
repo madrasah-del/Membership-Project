@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, CreditCard, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { Loader2, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import SumUpCheckoutWidget from '@/components/apply/steps/SumUpCheckoutWidget'
 import { recordPaymentSuccess } from '@/app/apply/actions'
@@ -25,7 +25,11 @@ export default function PaymentCompletion({ membership }: Props) {
     const [isLoading, setIsLoading] = useState(true)
     const [status, setStatus] = useState<'idle' | 'processing' | 'success' | 'failed'>('idle')
 
-    const pendingPayment = (membership.payments as any)[0]
+    const pendingPayment = (membership.payments as Array<{
+        id: string
+        amount: number
+        status: string
+    }>)[0]
 
     useEffect(() => {
         async function initCheckout() {
@@ -47,7 +51,7 @@ export default function PaymentCompletion({ membership }: Props) {
                 } else {
                     setError(data.error || 'Failed to initialize payment')
                 }
-            } catch (err) {
+            } catch (_err) {
                 setError('Failed to connect to payment gateway')
             } finally {
                 setIsLoading(false)

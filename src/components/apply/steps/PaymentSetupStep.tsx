@@ -171,7 +171,7 @@ export default function PaymentSetupStep({ onNext, isSubmitting, membershipFee =
                 {giftAidConsent && (
                     <div className="bg-white/60 rounded-xl p-4 border border-emerald-100/50">
                         <p className="text-xs text-slate-700 leading-relaxed italic">
-                            "I want to Gift Aid my donation and any donations I make in the future or have made in the past 4 years to the Society. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference."
+                            &quot;I want to Gift Aid my donation and any donations I make in the future or have made in the past 4 years to the Society. I am a UK taxpayer and understand that if I pay less Income Tax and/or Capital Gains Tax than the amount of Gift Aid claimed on all my donations in that tax year it is my responsibility to pay any difference.&quot;
                         </p>
                     </div>
                 )}

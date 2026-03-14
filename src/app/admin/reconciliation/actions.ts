@@ -38,7 +38,7 @@ export async function parseBankStatement(rawText: string): Promise<Reconciliatio
         const amountMatch = line.match(amountRegex)
         const parsedAmount = amountMatch ? parseFloat(amountMatch[1]) : null
 
-        let bestMatch: any = null
+        let bestMatch: Record<string, unknown> | null = null
         let highestConfidence: 'high' | 'medium' | 'low' | 'none' = 'none'
 
         // Basic Fuzzy matching on names
@@ -72,12 +72,12 @@ export async function parseBankStatement(rawText: string): Promise<Reconciliatio
 
         matches.push({
             originalText: line,
-            parsedName: bestMatch ? `${bestMatch.first_name} ${bestMatch.last_name}` : null, // Extracted/Guessed name
+            parsedName: bestMatch ? `${bestMatch.first_name as string} ${bestMatch.last_name as string}` : null, // Extracted/Guessed name
             parsedAmount,
-            suggestedMembershipId: bestMatch?.id || null,
-            suggestedMembershipName: bestMatch ? `${bestMatch.first_name} ${bestMatch.last_name}` : null,
+            suggestedMembershipId: (bestMatch?.id as string) || null,
+            suggestedMembershipName: bestMatch ? `${bestMatch.first_name as string} ${bestMatch.last_name as string}` : null,
             confidence: highestConfidence,
-            status: bestMatch?.status || 'unknown'
+            status: (bestMatch?.status as 'pending_payment' | 'active' | 'unknown') || 'unknown'
         })
     }
 
@@ -115,7 +115,7 @@ export async function confirmReconciliationMatch(membershipId: string, amount: n
     return { success: true }
 }
 
-export async function linkSumUpTransaction(membershipId: string, sumupTransaction: any) {
+export async function linkSumUpTransaction(membershipId: string, sumupTransaction: Record<string, unknown>) {
     const supabase = await createClient()
 
     // 1. Get member details

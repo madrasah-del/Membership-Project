@@ -17,16 +17,16 @@ export default function DonationPage() {
   const [donationId, setDonationId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const handleInitiate = async (e: any) => {
-    e?.preventDefault()
+  const handleInitiate = async (e: React.FormEvent<HTMLFormElement> | null) => {
+    if (e) e.preventDefault()
     setLoading(true)
     try {
         const finalAmount = amount || parseFloat(customAmount)
         if (!finalAmount || isNaN(finalAmount)) return
 
         let giftAidId = undefined
-        if (isGiftAid) {
-            const formData = new FormData(e.target)
+        if (isGiftAid && e) {
+            const formData = new FormData(e.currentTarget)
             const declaration = await createGiftAidDeclaration(formData)
             giftAidId = declaration.id
         }

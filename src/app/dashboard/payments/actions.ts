@@ -128,9 +128,9 @@ export async function cancelAutoRenewal(membershipId: string) {
         revalidatePath('/dashboard/payments')
         return { success: true }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Cancellation Error:', error)
-        return { error: error.message || 'An unexpected error occurred during cancellation.' }
+        return { error: error instanceof Error ? error.message : 'An unexpected error occurred during cancellation.' }
     }
 }
 
@@ -204,9 +204,9 @@ export async function getActivePaymentInstrument(membershipId: string) {
 
         return { instrument: null }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Fetch Instrument Error:', error)
-        return { error: error.message || 'An unexpected error occurred while fetching card details.' }
+        return { error: error instanceof Error ? error.message : 'An unexpected error occurred while fetching card details.' }
     }
 }
 
@@ -246,7 +246,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
         const checkoutReference = `UPDATE-CHK-${membershipId}-${Date.now()}`
 
         // Payload for tokenization checkout (must have an amount, usually minimal for 3DS or handled internally)
-        const sumupPayload: any = {
+        const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
             amount: 1, // Minimum amount required by SumUp API for checkout creation, though we don't plan to actually charge it if we can avoid it, but wait. Let's see if 0 is allowed for SETUP_RECURRING_PAYMENT. Actually, for card updates, £1 is standard for auth. We'll set it to 1, but we don't record this in our DB as a real payment.
             currency: 'GBP',
@@ -275,9 +275,9 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
 
         return { checkoutId: data.id }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Update Init Error:', error)
-        return { error: error.message || 'An unexpected error occurred during initialization.' }
+        return { error: error instanceof Error ? error.message : 'An unexpected error occurred during initialization.' }
     }
 }
 
@@ -354,10 +354,134 @@ export async function finalizeCardUpdate(membershipId: string) {
         revalidatePath('/dashboard/payments')
         return { success: true }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Finalize Update Error:', error)
         // Even if cleanup fails, the new card is on file, so we don't throw a hard error to the user if we don't want to break the flow,
         // but it's okay to return the error for debug purposes.
-        return { error: error.message || 'An unexpected error occurred during cleanup.' }
+        return { error: error instanceof Error ? error.message : 'An unexpected error occurred during finalization.' }
+    }
+}
+
+/**
+ * Initializes a full payment checkout for the annual membership fee.
+ */
+export async function initializeMembershipPayment(membershipId: string, amount: number) {
+    const supabase = await createClient()
+
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw new Error('Unauthorized')
+
+        // Verify the membership belongs to this user
+        const { data: membership } = await supabase
+            .from('memberships')
+            .select('id, first_name, last_name')
+            .eq('id', membershipId)
+            .eq('user_id', user.id)
+            .single()
+
+        if (!membership) {
+            throw new Error('Unauthorized action on this membership.')
+        }
+
+        const sumupSecretKey = process.env.SUMUP_SECRET_KEY
+        const merchantCode = process.env.NEXT_PUBLIC_SUMUP_MERCHANT_CODE
+
+        if (!sumupSecretKey || !merchantCode) {
+            throw new Error('SumUp API keys are not configured correctly.')
+        }
+
+        // Generate a unique checkout reference
+        const checkoutReference = `MEM-DASH-${membershipId}-${Date.now()}`
+
+        const sumupPayload = {
+            checkout_reference: checkoutReference,
+            amount: amount,
+            currency: 'GBP',
+            merchant_code: merchantCode,
+            description: `Annual Membership Fee - ${membership.first_name} ${membership.last_name}`,
+            customer_id: `eeis-m-${membershipId}`,
+            purpose: 'SETUP_RECURRING_PAYMENT'
+        }
+
+        const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sumupSecretKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(sumupPayload)
+        })
+
+        const data = await response.json()
+        if (!response.ok) {
+            console.error('SumUp API Error (Payment Init):', data)
+            throw new Error('Failed to initialize payment gateway.')
+        }
+
+        return { checkoutId: data.id }
+
+    } catch (error: unknown) {
+        console.error('Payment Init Error:', error)
+        return { error: error instanceof Error ? error.message : 'An unexpected error occurred during initialization.' }
+    }
+}
+
+/**
+ * Records a successful membership payment in the database.
+ */
+export async function recordDashboardPaymentSuccess(membershipId: string, transactionId: string, amount: number) {
+    const supabase = await createClient()
+
+    try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        if (authError || !user) throw new Error('Unauthorized')
+
+        // 1. Create a payment record
+        const { error: paymentError } = await supabase
+            .from('payments')
+            .insert({
+                membership_id: membershipId,
+                amount: amount,
+                payment_method: 'sumup',
+                status: 'completed',
+                sumup_transaction_id: transactionId,
+                payment_date: new Date().toISOString(),
+                is_recurring: true,
+                payment_type: 'renewal'
+            })
+
+        if (paymentError) throw paymentError
+
+        // 2. Update membership status to active if it was pending_payment
+        const { error: membershipError } = await supabase
+            .from('memberships')
+            .update({ status: 'active' }) // Or 'pending_approval' if you want committee to review again after payment
+            .eq('id', membershipId)
+            // .in('status', ['pending_payment', 'pending']) // Only move to active if it was pending payment. 
+            // Wait, if they are already active but just paying for next year, we don't change status.
+            // But if they are pending_payment, we move to active (or pending_approval).
+            // Let's check current status.
+            
+        const { data: currentMembership } = await supabase
+            .from('memberships')
+            .select('status')
+            .eq('id', membershipId)
+            .single()
+            
+        if (currentMembership && (currentMembership.status === 'pending_payment' || currentMembership.status === 'pending')) {
+            await supabase
+                .from('memberships')
+                .update({ status: 'pending_approval' })
+                .eq('id', membershipId)
+        }
+
+        revalidatePath('/dashboard/payments')
+        revalidatePath('/dashboard')
+        return { success: true }
+
+    } catch (error: unknown) {
+        console.error('Record Payment Success Error:', error)
+        return { error: 'Payment was successful, but we failed to update your status. Please contact support.' }
     }
 }

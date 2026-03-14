@@ -37,8 +37,10 @@ export const dependentsSchema = z.object({
     dependents: z.array(z.object({
         name: z.string().min(2, 'Name is required'),
         relation: z.string().min(2, 'Relation is required'),
-        mobile: z.string().optional(),
-        email: z.string().email('Invalid email').optional().or(z.literal('')),
+        mobile: z.string().min(10, 'Valid phone number required'),
+        email: z.string().email('Valid email is required'),
+        profession: z.string().optional(),
+        position: z.string().optional(),
     })).max(8, 'Maximum 8 dependents allowed'),
 })
 
@@ -61,12 +63,22 @@ export const postPaymentSchema = z.object({
     committeeContactId: z.string().optional(),
 })
 
+export const businessDetailsSchema = z.object({
+    businessOptIn: z.boolean().optional(),
+    businessType: z.string().optional(),
+    businessName: z.string().optional(),
+    businessWebsite: z.string().optional(),
+    businessContact: z.string().optional(),
+    businessDescription: z.string().optional(),
+})
+
 export type PersonalDetailsData = z.infer<typeof personalDetailsSchema>
 export type AddressData = z.infer<typeof addressSchema>
 export type PhotoData = z.infer<typeof photoSchema>
 export type DependentsData = z.infer<typeof dependentsSchema>
 export type EligibilityData = z.infer<typeof eligibilitySchema>
 export type PostPaymentData = z.infer<typeof postPaymentSchema>
+export type BusinessDetailsData = z.infer<typeof businessDetailsSchema>
 
 // Combined schema for final submission (initial stage)
 export const fullApplicationSchema = z.object({
@@ -74,4 +86,5 @@ export const fullApplicationSchema = z.object({
     ...addressSchema.shape,
     ...dependentsSchema.shape,
     ...eligibilitySchema.shape,
+    ...businessDetailsSchema.shape,
 })

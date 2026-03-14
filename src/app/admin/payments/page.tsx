@@ -135,14 +135,14 @@ export default async function PaymentsDashboard() {
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium">
                             {payments?.map((payment) => {
-                                const m = payment.memberships as any
+                                const m = payment.memberships as Record<string, unknown>
                                 const name = m ? `${m.first_name} ${m.last_name}` : 'External / Misc'
                                 
                                 return (
                                     <tr key={payment.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-8 py-5">
                                             <p className="font-bold text-slate-900 leading-tight">{name}</p>
-                                            {m && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">{m.status}</p>}
+                                            {!!m && <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-0.5">{m.status as string}</p>}
                                         </td>
                                         <td className="px-8 py-5">
                                             <div className="flex items-center gap-1.5">

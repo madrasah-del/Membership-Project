@@ -93,6 +93,7 @@ export async function submitApplication(data: FullApplicationData & { paymentMet
                 profession: validData.profession,
                 functional_position: validData.functionalPosition,
                 position: validData.position,
+                phone: validData.phone,
                 address: validData.address,
                 town: validData.town,
                 postcode: validData.postcode,
@@ -100,6 +101,12 @@ export async function submitApplication(data: FullApplicationData & { paymentMet
                 eligibility_criteria_met: validData.isResidentOrRegular && validData.isSunniMuslim,
                 is_non_resident_confirmation: validData.isNonResidentConfirmation,
                 whatsapp_opt_in: validData.whatsappOptIn,
+                business_opt_in: validData.businessOptIn ?? false,
+                business_type: validData.businessType,
+                business_name: validData.businessName,
+                business_website: validData.businessWebsite,
+                business_contact: validData.businessContact,
+                business_description: validData.businessDescription,
                 status: 'pending_payment'
             })
             .select('id')

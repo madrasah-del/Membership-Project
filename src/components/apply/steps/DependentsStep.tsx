@@ -82,17 +82,18 @@ export function DependentsStep({ initialData, onNext }: Props) {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-700 pl-1">Mobile (Optional)</label>
+                                <label className="text-xs font-medium text-slate-700 pl-1">Mobile *</label>
                                 <input
                                     type="tel"
                                     {...register(`dependents.${index}.mobile` as const)}
-                                    className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                                    className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all ${errors.dependents?.[index]?.mobile ? 'border-red-300' : 'border-slate-200'}`}
                                     placeholder="07123..."
                                 />
+                                {errors.dependents?.[index]?.mobile && <p className="text-red-500 text-xs mt-1 pl-1">{errors.dependents[index]?.mobile?.message}</p>}
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-700 pl-1">Email (Optional)</label>
+                                <label className="text-xs font-medium text-slate-700 pl-1">Email *</label>
                                 <input
                                     type="email"
                                     {...register(`dependents.${index}.email` as const)}
@@ -100,6 +101,26 @@ export function DependentsStep({ initialData, onNext }: Props) {
                                     placeholder="name@email.com"
                                 />
                                 {errors.dependents?.[index]?.email && <p className="text-red-500 text-xs mt-1 pl-1">{errors.dependents[index]?.email?.message}</p>}
+                            </div>
+                            
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-700 pl-1">Profession (Optional)</label>
+                                <input
+                                    type="text"
+                                    {...register(`dependents.${index}.profession` as const)}
+                                    className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                                    placeholder="e.g. Teacher"
+                                />
+                            </div>
+                            
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-700 pl-1">Job Title (Optional)</label>
+                                <input
+                                    type="text"
+                                    {...register(`dependents.${index}.position` as const)}
+                                    className="w-full px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                                    placeholder="e.g. Head of Science"
+                                />
                             </div>
 
                         </div>
@@ -109,7 +130,7 @@ export function DependentsStep({ initialData, onNext }: Props) {
                 {fields.length < 8 && (
                     <button
                         type="button"
-                        onClick={() => append({ name: '', relation: '', mobile: '', email: '' })}
+                        onClick={() => append({ name: '', relation: '', mobile: '', email: '', profession: '', position: '' })}
                         className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 hover:text-brand-600 hover:border-brand-300 hover:bg-brand-50/50 transition-all flex flex-col items-center justify-center gap-2 font-medium"
                     >
                         <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">

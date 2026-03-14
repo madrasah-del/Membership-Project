@@ -31,7 +31,7 @@ export function PersonalDetailsStep({ initialData, onNext }: Props) {
         const professionValue = watch('profession')
         const functionalPositionValue = watch('functionalPosition')
 
-        let finalData = { ...data }
+        const finalData = { ...data }
 
         if (professionValue === 'Other') {
             const otherVal = (document.getElementById('professionOtherInput') as HTMLInputElement)?.value

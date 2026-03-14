@@ -111,22 +111,22 @@ export default async function MemberVotingPage({
                         <input type="hidden" name="membershipId" value={membership.id} />
 
                         <div className="space-y-4 mb-8">
-                            {election.election_candidates?.map((candidate: any) => (
+                            {election.election_candidates?.map((candidate: Record<string, unknown>) => (
                                 <label
-                                    key={candidate.id}
+                                    key={candidate.id as string}
                                     className="relative flex items-center p-4 cursor-pointer rounded-xl border border-slate-200 hover:border-brand-400 hover:bg-brand-50/30 transition-all has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50 has-[:checked]:ring-1 has-[:checked]:ring-brand-500 group"
                                 >
                                     <div className="flex items-center h-5">
                                         <input
                                             type="radio"
                                             name="candidateId"
-                                            value={candidate.id}
+                                            value={candidate.id as string}
                                             required
                                             className="w-5 h-5 text-brand-600 border-slate-300 focus:ring-brand-500 cursor-pointer"
                                         />
                                     </div>
                                     <div className="ml-4 text-sm">
-                                        <span className="font-semibold text-slate-900 text-lg group-hover:text-brand-900 transition-colors">{candidate.name}</span>
+                                        <span className="font-semibold text-slate-900 text-lg group-hover:text-brand-900 transition-colors">{candidate.name as string}</span>
                                     </div>
                                 </label>
                             ))}

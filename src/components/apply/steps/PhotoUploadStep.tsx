@@ -113,9 +113,9 @@ export function PhotoUploadStep({ initialData, onNext }: Props) {
 
             setPhotoUrl(publicUrl)
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Upload Error:', err)
-            setError(err.message || 'Failed to upload photo. Please try again.')
+            setError(err instanceof Error ? err.message : 'Failed to upload photo. Please try again.')
         } finally {
             setIsUploading(false)
             if (fileInputRef.current) fileInputRef.current.value = ''

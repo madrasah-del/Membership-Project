@@ -72,7 +72,7 @@ export default async function PendingApprovalsPage() {
                                         <p className="text-slate-900">
                                             {Array.isArray(member.profiles)
                                                 ? member.profiles[0]?.email
-                                                : (member.profiles as any)?.email}
+                                                : (member.profiles as Record<string, unknown>)?.email as string}
                                         </p>
                                         <p className="text-xs text-slate-500">{member.phone}</p>
                                     </td>

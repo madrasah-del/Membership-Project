@@ -16,12 +16,22 @@ export default async function Page() {
         redirect('/login')
     }
 
-    // Get membership ID
+    // Get membership ID and dependent count
     const { data: membership } = await supabase
         .from('memberships')
-        .select('id')
+        .select('id, dependents')
         .eq('user_id', user.id)
         .single()
+
+    // Fetch the dynamic minimum fee setting
+    const { data: feeSetting } = await supabase
+        .from('app_settings')
+        .select('setting_value')
+        .eq('setting_key', 'min_membership_fee')
+        .single()
+
+    const baseFee = feeSetting ? Number(feeSetting.setting_value) : 10.00
+    const dependentCount = (membership?.dependents as any[])?.length || 0
 
     const { payments, error } = await getMemberPayments()
 
@@ -34,7 +44,6 @@ export default async function Page() {
     }
 
     // Check if the user has an active recurring payment
-    // A subscription is active if any payment record is marked as recurring
     const hasActiveSubscription = (payments || []).some(p => p.is_recurring)
 
     let activeInstrument = null
@@ -50,6 +59,8 @@ export default async function Page() {
                 hasActiveSubscription={hasActiveSubscription}
                 membershipId={membership?.id || null}
                 activeInstrument={activeInstrument}
+                baseFee={baseFee}
+                dependentCount={dependentCount}
             />
         </div>
     )

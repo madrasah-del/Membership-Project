@@ -30,8 +30,17 @@ export default async function SettingsPage() {
         initialEmail={user.email || ''}
         initialFirstName={membership?.first_name || ''}
         initialLastName={membership?.last_name || ''}
+        initialPhone={membership?.phone || ''}
+        initialProfession={membership?.profession || ''}
+        initialPosition={membership?.position || ''}
         initialNewsletterOptIn={membership?.newsletter_opt_in || false}
         initialWhatsappOptIn={membership?.whatsapp_opt_in || false}
+        initialBusinessOptIn={membership?.business_opt_in || false}
+        initialBusinessType={membership?.business_type || ''}
+        initialBusinessName={membership?.business_name || ''}
+        initialBusinessContact={membership?.business_contact || ''}
+        initialBusinessWebsite={membership?.business_website || ''}
+        initialBusinessDescription={membership?.business_description || ''}
       />
     </div>
   )

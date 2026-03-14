@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 // Step Components
 import { PersonalDetailsStep } from './steps/PersonalDetailsStep'
 import { AddressStep } from './steps/AddressStep'
 import { DependentsStep } from './steps/DependentsStep'
+import { BusinessDetailsStep } from './steps/BusinessDetailsStep'
 import { EligibilityStep } from './steps/EligibilityStep'
 import PaymentSetupStep from './steps/PaymentSetupStep'
 import { PostPaymentStep } from './steps/PostPaymentStep'
@@ -15,12 +16,13 @@ import SumUpCheckoutWidget from './steps/SumUpCheckoutWidget'
 
 // Actions and Validations
 import { submitApplication, recordPaymentSuccess } from '@/app/apply/actions'
-import { PersonalDetailsData, AddressData, DependentsData, EligibilityData } from '@/lib/validations'
+import { PersonalDetailsData, AddressData, DependentsData, EligibilityData, BusinessDetailsData } from '@/lib/validations'
 
 const STEPS = [
     { id: 'personal', title: 'Personal Details' },
     { id: 'address', title: 'Contact & Address' },
     { id: 'dependents', title: 'Dependents' },
+    { id: 'business', title: 'Business Details' },
     { id: 'eligibility', title: 'Eligibility' },
     { id: 'payment', title: 'Payment Setup' },
     { id: 'post-payment', title: 'Final Details' },
@@ -48,22 +50,24 @@ export default function ApplicationForm({
     const [personalDetails, setPersonalDetails] = useState<Partial<PersonalDetailsData>>(initialPersonalDetails)
     const [addressDetails, setAddressDetails] = useState<Partial<AddressData>>({})
     const [dependentsDetails, setDependentsDetails] = useState<Partial<DependentsData>>({ dependents: [] })
+    const [businessDetails, setBusinessDetails] = useState<Partial<BusinessDetailsData>>({})
     const [eligibilityDetails, setEligibilityDetails] = useState<Partial<EligibilityData>>({
         whatsappOptIn: false,
         isResidentOrRegular: false,
         isSunniMuslim: false
     })
 
-    const handleNext = async (data: any) => {
+    const handleNext = async (data: Record<string, unknown>) => {
         // Save current step data
-        if (currentStep === 0) setPersonalDetails(data)
-        if (currentStep === 1) setAddressDetails(data)
-        if (currentStep === 2) setDependentsDetails(data)
-        if (currentStep === 3) setEligibilityDetails(data)
+        if (currentStep === 0) setPersonalDetails(data as Partial<PersonalDetailsData>)
+        if (currentStep === 1) setAddressDetails(data as Partial<AddressData>)
+        if (currentStep === 2) setDependentsDetails(data as Partial<DependentsData>)
+        if (currentStep === 3) setBusinessDetails(data as Partial<BusinessDetailsData>)
+        if (currentStep === 4) setEligibilityDetails(data as Partial<EligibilityData>)
 
         // Final submission if at payment step
-        if (currentStep === 4) {
-            await handleSubmit(data)
+        if (currentStep === 5) {
+            await handleSubmit(data as { paymentMethod: string; isRecurring: boolean; giftAidConsent: boolean })
         } else {
             setCurrentStep((prev) => prev + 1)
             window.scrollTo(0, 0)
@@ -72,12 +76,12 @@ export default function ApplicationForm({
 
     const handleBack = () => {
         // Don't allow going back from post-payment if they paid
-        if (currentStep === 5) return
+        if (currentStep === 6) return
         setCurrentStep((prev) => Math.max(0, prev - 1))
         window.scrollTo(0, 0)
     }
 
-    const handleSubmit = async (finalPaymentData: any) => {
+    const handleSubmit = async (finalPaymentData: { paymentMethod: string; isRecurring: boolean; giftAidConsent: boolean }) => {
         setIsSubmitting(true)
         setError(null)
 
@@ -85,6 +89,7 @@ export default function ApplicationForm({
             ...personalDetails,
             ...addressDetails,
             ...dependentsDetails,
+            ...businessDetails,
             ...eligibilityDetails,
             paymentMethod: finalPaymentData.paymentMethod,
             isRecurring: finalPaymentData.isRecurring,
@@ -92,7 +97,8 @@ export default function ApplicationForm({
         }
 
         try {
-            const result = await submitApplication(fullData as any)
+            // @ts-expect-error Types diverge slightly between frontend accumulated state and backend expect payload but logically sound.
+            const result = await submitApplication(fullData)
             if (result.error) {
                 setError(result.error)
                 setIsSubmitting(false)
@@ -123,7 +129,7 @@ export default function ApplicationForm({
                     setIsAwaitingSumUp(true)
                 } else {
                     // For non-sumup, go to post-payment directly
-                    setCurrentStep(5)
+                    setCurrentStep(6)
                 }
             }
         } catch {
@@ -171,7 +177,7 @@ export default function ApplicationForm({
 
                 {/* Step Header */}
                 <div className="bg-slate-50/50 border-b border-slate-100 p-6 flex items-center gap-4">
-                    {currentStep > 0 && currentStep < 5 && (
+                    {currentStep > 0 && currentStep < 6 && (
                         <button
                             onClick={handleBack}
                             disabled={isSubmitting}
@@ -218,6 +224,12 @@ export default function ApplicationForm({
                         />
                     )}
                     {currentStep === 3 && (
+                        <BusinessDetailsStep
+                            initialData={businessDetails}
+                            onNext={handleNext}
+                        />
+                    )}
+                    {currentStep === 4 && (
                         <EligibilityStep
                             initialData={eligibilityDetails}
                             onNext={handleNext}
@@ -228,14 +240,14 @@ export default function ApplicationForm({
                             }
                         />
                     )}
-                    {currentStep === 4 && !isAwaitingSumUp && (
+                    {currentStep === 5 && !isAwaitingSumUp && (
                         <PaymentSetupStep
                             onNext={handleNext}
                             isSubmitting={isSubmitting}
                             membershipFee={membershipFee + ((dependentsDetails.dependents?.length || 0) * membershipFee)}
                         />
                     )}
-                    {currentStep === 5 && membershipId && (
+                    {currentStep === 6 && membershipId && (
                         <PostPaymentStep
                             membershipId={membershipId}
                             paymentMethod={selectedPaymentMethod || 'bank_transfer'}
@@ -249,7 +261,7 @@ export default function ApplicationForm({
                                 if (status === 'SUCCESS' && membershipId) {
                                     await recordPaymentSuccess(membershipId, transactionId || 'sumup_success_no_id')
                                     setIsAwaitingSumUp(false)
-                                    setCurrentStep(5)
+                                    setCurrentStep(6)
                                     window.scrollTo(0, 0)
                                 } else if (status === 'FAILED') {
                                     setIsAwaitingSumUp(false)

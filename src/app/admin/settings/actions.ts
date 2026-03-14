@@ -19,7 +19,7 @@ export async function getAppSettings() {
     return settings
 }
 
-export async function updateSetting(key: string, value: any) {
+export async function updateSetting(key: string, value: unknown) {
     const supabase = await createClient()
 
     // We assume RLS policies will prevent non-admins from updating

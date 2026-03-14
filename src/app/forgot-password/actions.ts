@@ -25,7 +25,10 @@ export async function resetPassword(formData: FormData) {
         }
 
         return { success: true }
-    } catch (e: any) {
-        return { error: e.message || 'An unexpected server-side error occurred.' }
+    } catch (e: unknown) {
+        if (e instanceof Error) {
+            return { error: e.message || 'An unexpected server-side error occurred.' }
+        }
+        return { error: 'An unexpected server-side error occurred.' }
     }
 }

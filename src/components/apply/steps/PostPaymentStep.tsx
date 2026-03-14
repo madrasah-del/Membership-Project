@@ -96,8 +96,8 @@ export function PostPaymentStep({ membershipId, paymentMethod, onComplete }: Pro
             if (uploadError) throw uploadError
             const { data: { publicUrl } } = supabase.storage.from('profile_photos').getPublicUrl(filePath)
             setPhotoUrl(publicUrl)
-        } catch (err: any) {
-            setError(err.message || 'Upload failed')
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Upload failed')
         } finally {
             setIsUploading(false)
         }

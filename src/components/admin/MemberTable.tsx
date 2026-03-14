@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, Search, Filter, MoreVertical, XCircle, Clock, Users } from 'lucide-react'
+import { CheckCircle2, Search, Filter, XCircle, Clock, Users } from 'lucide-react'
 import Link from 'next/link'
 
 interface Member {
@@ -15,7 +15,7 @@ interface Member {
     postcode: string
     photo_url?: string
     created_at: string
-    profiles: any
+    profiles: Record<string, unknown> | Array<Record<string, unknown>>
 }
 
 interface Props {
@@ -89,6 +89,7 @@ export default function MemberTable({ memberships }: Props) {
                                         <div className="flex items-center gap-4">
                                             {member.photo_url ? (
                                                 <div className="w-12 h-12 rounded-2xl overflow-hidden shadow-md ring-2 ring-white ring-offset-2 ring-offset-slate-50">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img src={member.photo_url} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                             ) : (
@@ -110,8 +111,8 @@ export default function MemberTable({ memberships }: Props) {
                                     <td className="px-8 py-5">
                                         <p className="text-slate-700 font-medium">
                                             {Array.isArray(member.profiles)
-                                                ? member.profiles[0]?.email
-                                                : (member.profiles as any)?.email}
+                                                ? (member.profiles[0] as Record<string, unknown>)?.email as string
+                                                : (member.profiles as Record<string, unknown>)?.email as string}
                                         </p>
                                         <p className="text-[10px] text-slate-400 font-mono mt-1">{member.town}, {member.postcode}</p>
                                     </td>

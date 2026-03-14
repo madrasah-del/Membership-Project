@@ -67,7 +67,7 @@ export default async function MemberDetailsPage({ params }: { params: { id: stri
                                     <Mail className="w-5 h-5 text-slate-400 mt-1" />
                                     <div>
                                         <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
-                                        <p className="text-slate-900 font-bold">{(member.profiles as any)?.email}</p>
+                                        <p className="text-slate-900 font-bold">{(member.profiles as Record<string, unknown>)?.email as string}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -119,11 +119,11 @@ export default async function MemberDetailsPage({ params }: { params: { id: stri
                             <p className="text-slate-500 italic p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center">No dependents listed in this application.</p>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {(member.dependents as any[]).map((dep, i) => (
+                                {(member.dependents as Array<Record<string, unknown>>).map((dep, i) => (
                                     <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <p className="font-bold text-slate-900">{dep.name}</p>
-                                        <p className="text-sm text-slate-500">{dep.relation}</p>
-                                        {dep.email && <p className="text-xs text-slate-400 mt-1">{dep.email}</p>}
+                                        <p className="font-bold text-slate-900">{dep.name as string}</p>
+                                        <p className="text-sm text-slate-500">{dep.relation as string}</p>
+                                        {!!dep.email && <p className="text-xs text-slate-400 mt-1">{dep.email as string}</p>}
                                     </div>
                                 ))}
                             </div>
@@ -182,16 +182,16 @@ export default async function MemberDetailsPage({ params }: { params: { id: stri
                             {!member.payments || member.payments.length === 0 ? (
                                 <p className="text-sm text-slate-500 italic">No payment records found.</p>
                             ) : (
-                                (member.payments as any[]).map((p, i) => (
+                                (member.payments as Array<Record<string, unknown>>).map((p, i) => (
                                     <div key={i} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                                         <div>
-                                            <p className="text-sm font-bold text-slate-900">£{p.amount.toFixed(2)}</p>
-                                            <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{p.payment_method?.replace('_', ' ')} • {new Date(p.created_at).toLocaleDateString()}</p>
+                                            <p className="text-sm font-bold text-slate-900">£{Number(p.amount || 0).toFixed(2)}</p>
+                                            <p className="text-[10px] text-slate-400 uppercase tracking-tighter">{(p.payment_method as string)?.replace('_', ' ')} • {new Date(p.created_at as string).toLocaleDateString()}</p>
                                         </div>
                                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase ${
                                             p.status === 'successful' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
                                         }`}>
-                                            {p.status}
+                                            {p.status as string}
                                         </span>
                                     </div>
                                 ))
