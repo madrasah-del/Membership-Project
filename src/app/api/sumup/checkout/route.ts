@@ -54,7 +54,6 @@ export async function POST(request: Request) {
             checkout_reference: checkoutReference,
             amount: amount,
             currency: 'GBP',
-            pay_to_email: merchantEmail,
             merchant_code: merchantCode,
             description: description || `Online Membership Application - ${name || membershipId}`,
         }
