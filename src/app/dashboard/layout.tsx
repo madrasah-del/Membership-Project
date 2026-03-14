@@ -1,8 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { LogOut, User, Settings, FileText, ChevronRight, CreditCard, Bell, ClipboardList, Vote } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { signout } from '@/app/login/actions'
+import DashboardNav from '@/components/dashboard/DashboardNav'
 
 export default async function DashboardLayout({
     children,
@@ -32,45 +33,7 @@ export default async function DashboardLayout({
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-1">
-                    <Link href="/dashboard" className="flex items-center justify-between px-3 py-2.5 bg-brand-50 text-brand-700 rounded-xl font-medium transition-colors">
-                        <div className="flex items-center gap-3">
-                            <User className="w-5 h-5 text-brand-500" />
-                            Overview
-                        </div>
-                        <ChevronRight className="w-4 h-4 opacity-50" />
-                    </Link>
-
-                    <Link href="/dashboard/membership" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <FileText className="w-5 h-5 text-slate-400" />
-                        My Membership
-                    </Link>
-
-                    <Link href="/dashboard/payments" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <CreditCard className="w-5 h-5 text-slate-400" />
-                        Payments & Subscriptions
-                    </Link>
-
-                    <Link href="/dashboard/noticeboard" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <ClipboardList className="w-5 h-5 text-slate-400" />
-                        Noticeboard
-                    </Link>
-
-                    <Link href="/dashboard/elections" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <Vote className="w-5 h-5 text-slate-400" />
-                        Elections & Voting
-                    </Link>
-
-                    <Link href="/dashboard/notifications" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <Bell className="w-5 h-5 text-slate-400" />
-                        Notifications
-                    </Link>
-
-                    <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2.5 text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl font-medium transition-colors">
-                        <Settings className="w-5 h-5 text-slate-400" />
-                        Settings
-                    </Link>
-                </nav>
+                <DashboardNav />
 
                 <div className="p-4 border-t border-slate-100">
                     <div className="mb-4 px-3">
