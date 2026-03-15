@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         const data = await response.json()
 
         if (!response.ok) {
-            console.error('SumUp API Error:', data)
+            console.error('SumUp API Error (Route):', JSON.stringify(data, null, 2))
             return NextResponse.json(
                 { error: 'Failed to create SumUp checkout', details: data },
                 { status: response.status }
