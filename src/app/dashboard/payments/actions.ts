@@ -261,11 +261,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
             customer_id: customerId,
             purpose: 'SETUP_RECURRING_PAYMENT',
             return_url: returnUrl,
-            personal_details: {
-                first_name: membership?.first_name || 'Member',
-                last_name: membership?.last_name || 'EEIS',
-                email: (membership?.email || user.email || 'madrasah@eeis.co.uk').trim().toLowerCase()
-            }
+            redirect_url: returnUrl
         }
 
         const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
@@ -280,7 +276,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
         const data = await response.json()
 
         if (!response.ok) {
-            console.error('SumUp API Error (Update Init):', data)
+            console.error('SumUp API Update Error:', JSON.stringify(data, null, 2))
             throw new Error(data?.message || 'Failed to initialize connection to payment gateway.')
         }
 
@@ -466,11 +462,7 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
             customer_id: `m${membershipId.replace(/-/g, '')}`.slice(0, 32),
             purpose: 'SETUP_RECURRING_PAYMENT',
             return_url: returnUrl,
-            personal_details: {
-                first_name: membership.first_name,
-                last_name: membership.last_name,
-                email: (membership.email || user.email || 'madrasah@eeis.co.uk').trim().toLowerCase()
-            }
+            redirect_url: returnUrl
         }
 
         const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
@@ -484,7 +476,7 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
 
         const data = await response.json()
         if (!response.ok) {
-            console.error('SumUp API Error (Payment Init):', data)
+            console.error('SumUp API Membership Payment Error:', JSON.stringify(data, null, 2))
             throw new Error(data?.message || 'Failed to initialize payment gateway.')
         }
 

@@ -61,11 +61,7 @@ export async function POST(request: Request) {
             merchant_code: merchantCode,
             description: (description || `Online Membership Application - ${name || membershipId}`).slice(0, 255),
             return_url: returnUrl,
-            personal_details: {
-                first_name: name?.split(' ')[0] || 'Member',
-                last_name: name?.split(' ').slice(1).join(' ') || 'EEIS',
-                email: (email || merchantEmail).trim().toLowerCase()
-            }
+            redirect_url: returnUrl
         }
 
         if (isRecurring) {
