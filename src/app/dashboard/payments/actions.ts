@@ -245,17 +245,17 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
         // Ensure customer exists in SumUp system
         await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
 
-        // Generate a unique checkout reference for the update
-        const checkoutReference = `U${membershipId.slice(0, 8)}${Date.now()}`.slice(0, 50)
+        // Generate a unique checkout reference (Max 50)
+        const checkoutReference = `U${membershipId.replace(/-/g, '').slice(0, 12)}${Date.now()}`.slice(0, 50)
 
         // Payload for tokenization checkout (must have an amount, usually minimal for 3DS or handled internally)
         const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
-            amount: 1, // Minimum amount required by SumUp API for checkout creation
+            amount: 1.00,
             currency: 'GBP',
-            pay_to_email: user.email || process.env.NEXT_PUBLIC_SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk',
+            pay_to_email: (user.email || process.env.SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk').trim().toLowerCase(),
             merchant_code: merchantCode,
-            description: `Update Payment Method - ${membershipId}`,
+            description: `Payment Update - ${membershipId.slice(0, 8)}`,
             customer_id: customerId,
             purpose: 'SETUP_RECURRING_PAYMENT'
         }
@@ -444,14 +444,14 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
 
         // Generate a unique checkout reference
-        const checkoutReference = `M${membershipId.slice(0, 8)}${Date.now()}`.slice(0, 50)
+        const checkoutReference = `M${membershipId.replace(/-/g, '').slice(0, 12)}${Date.now()}`.slice(0, 50)
 
         const sumupPayload = {
             checkout_reference: checkoutReference,
-            amount: amount,
+            amount: Number(amount.toFixed(2)),
             currency: 'GBP',
             merchant_code: merchantCode,
-            description: `Annual Membership Fee - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
+            description: `EEIS Membership - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
             customer_id: `m${membershipId.replace(/-/g, '')}`.slice(0, 32),
             purpose: 'SETUP_RECURRING_PAYMENT'
         }
