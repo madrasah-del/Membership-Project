@@ -224,7 +224,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
         // Verify the membership belongs to this user
         const { data: membership } = await supabase
             .from('memberships')
-            .select('id')
+            .select('id, first_name, last_name, email')
             .eq('id', membershipId)
             .eq('user_id', user.id)
             .single()
@@ -248,16 +248,24 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
         // Generate a unique checkout reference (Max 50)
         const checkoutReference = `U${membershipId.replace(/-/g, '').slice(0, 12)}${Date.now()}`.slice(0, 50)
 
-        // Payload for tokenization checkout (must have an amount, usually minimal for 3DS or handled internally)
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://eeis.co.uk'
+        const returnUrl = `${baseUrl}/dashboard/payments?status=callback`
+
+        // Payload for tokenization checkout
         const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
             amount: 1.00,
             currency: 'GBP',
-            pay_to_email: (user.email || process.env.SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk').trim().toLowerCase(),
             merchant_code: merchantCode,
             description: `Payment Update - ${membershipId.slice(0, 8)}`,
             customer_id: customerId,
-            purpose: 'SETUP_RECURRING_PAYMENT'
+            purpose: 'SETUP_RECURRING_PAYMENT',
+            return_url: returnUrl,
+            personal_details: {
+                first_name: membership?.first_name || 'Member',
+                last_name: membership?.last_name || 'EEIS',
+                email: (membership?.email || user.email || 'madrasah@eeis.co.uk').trim().toLowerCase()
+            }
         }
 
         const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
@@ -424,7 +432,7 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         // Verify the membership belongs to this user
         const { data: membership } = await supabase
             .from('memberships')
-            .select('id, first_name, last_name')
+            .select('id, first_name, last_name, email')
             .eq('id', membershipId)
             .eq('user_id', user.id)
             .single()
@@ -446,6 +454,9 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         // Generate a unique checkout reference
         const checkoutReference = `M${membershipId.replace(/-/g, '').slice(0, 12)}${Date.now()}`.slice(0, 50)
 
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://eeis.co.uk'
+        const returnUrl = `${baseUrl}/dashboard/payments?status=callback`
+
         const sumupPayload = {
             checkout_reference: checkoutReference,
             amount: Number(amount.toFixed(2)),
@@ -453,7 +464,13 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
             merchant_code: merchantCode,
             description: `EEIS Membership - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
             customer_id: `m${membershipId.replace(/-/g, '')}`.slice(0, 32),
-            purpose: 'SETUP_RECURRING_PAYMENT'
+            purpose: 'SETUP_RECURRING_PAYMENT',
+            return_url: returnUrl,
+            personal_details: {
+                first_name: membership.first_name,
+                last_name: membership.last_name,
+                email: (membership.email || user.email || 'madrasah@eeis.co.uk').trim().toLowerCase()
+            }
         }
 
         const response = await fetch('https://api.sumup.com/v0.1/checkouts', {

@@ -23,6 +23,9 @@ export async function POST(request: Request) {
             )
         }
 
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://eeis.co.uk'
+        const returnUrl = `${baseUrl}/dashboard/payments?status=callback`
+
         const customerId = membershipId 
             ? `m${membershipId.replace(/-/g, '')}`.slice(0, 32) 
             : `d${(metadata?.donation_id || Date.now().toString()).replace(/-/g, '')}`.slice(0, 32)
@@ -57,6 +60,12 @@ export async function POST(request: Request) {
             currency: 'GBP',
             merchant_code: merchantCode,
             description: (description || `Online Membership Application - ${name || membershipId}`).slice(0, 255),
+            return_url: returnUrl,
+            personal_details: {
+                first_name: name?.split(' ')[0] || 'Member',
+                last_name: name?.split(' ').slice(1).join(' ') || 'EEIS',
+                email: (email || merchantEmail).trim().toLowerCase()
+            }
         }
 
         if (isRecurring) {
