@@ -23,7 +23,9 @@ export async function POST(request: Request) {
             )
         }
 
-        const customerId = membershipId ? `eeis-m-${membershipId}` : `eeis-d-${metadata?.donation_id || Date.now()}`
+        const customerId = membershipId 
+            ? `m${membershipId.replace(/-/g, '').slice(0, 31)}` 
+            : `d${(metadata?.donation_id || Date.now().toString()).replace(/-/g, '').slice(0, 31)}`
 
         if (isRecurring) {
             // Ensure a customer exists for card tokenization
@@ -44,18 +46,18 @@ export async function POST(request: Request) {
             })
         }
 
-        // Generate a unique checkout reference
-        const prefix = isRecurring ? 'SUB_' : 'MEM_'
+        // Generate a unique checkout reference (Max 50 chars)
+        const prefix = isRecurring ? 'S' : 'M'
         const checkoutReference = reference || (membershipId 
-            ? `${prefix}${membershipId}__${Date.now()}` 
-            : `DON_${metadata?.donation_id || 'NONE'}__${Date.now()}`)
+            ? `${prefix}${membershipId.slice(0, 8)}${Date.now()}` 
+            : `D${(metadata?.donation_id || 'N').slice(0, 8)}${Date.now()}`).slice(0, 50)
 
         const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
             amount: amount,
             currency: 'GBP',
             merchant_code: merchantCode,
-            description: description || `Online Membership Application - ${name || membershipId}`,
+            description: (description || `Online Membership Application - ${name || membershipId}`).slice(0, 255),
         }
 
         if (isRecurring) {

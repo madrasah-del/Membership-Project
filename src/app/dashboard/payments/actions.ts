@@ -240,13 +240,13 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
             throw new Error('SumUp API keys or Merchant Code are not configured on the server.')
         }
 
-        const customerId = `eeis-m-${membershipId}`
+        const customerId = `m${membershipId.replace(/-/g, '').slice(0, 31)}` // Max 32 chars
 
         // Ensure customer exists in SumUp system
         await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
 
         // Generate a unique checkout reference for the update
-        const checkoutReference = `UPDATE-CHK-${membershipId}-${Date.now()}`
+        const checkoutReference = `U${membershipId.slice(0, 8)}${Date.now()}`.slice(0, 50)
 
         // Payload for tokenization checkout (must have an amount, usually minimal for 3DS or handled internally)
         const sumupPayload: Record<string, unknown> = {
@@ -369,7 +369,7 @@ export async function finalizeCardUpdate(membershipId: string) {
  * Ensures a customer exists in SumUp for card tokenization.
  */
 async function ensureSumUpCustomer(supabase: any, user: any, membershipId: string, sumupSecretKey: string) {
-    const customerId = `eeis-m-${membershipId}`
+    const customerId = `m${membershipId.replace(/-/g, '').slice(0, 31)}`
     
     // First check if customer exists
     const checkRes = await fetch(`https://api.sumup.com/v0.1/customers/${customerId}`, {
@@ -439,15 +439,15 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
 
         // Generate a unique checkout reference
-        const checkoutReference = `MEM-DASH-${membershipId}-${Date.now()}`
+        const checkoutReference = `M${membershipId.slice(0, 8)}${Date.now()}`.slice(0, 50)
 
         const sumupPayload = {
             checkout_reference: checkoutReference,
             amount: amount,
             currency: 'GBP',
             merchant_code: merchantCode,
-            description: `Annual Membership Fee - ${membership.first_name} ${membership.last_name}`,
-            customer_id: `eeis-m-${membershipId}`,
+            description: `Annual Membership Fee - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
+            customer_id: `m${membershipId.replace(/-/g, '').slice(0, 31)}`,
             purpose: 'SETUP_RECURRING_PAYMENT'
         }
 
