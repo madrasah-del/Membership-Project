@@ -62,7 +62,7 @@ export async function cancelAutoRenewal(membershipId: string) {
             throw new Error('Unauthorized action on this membership.')
         }
 
-        const customerId = `eeis-m-${membershipId}`
+        const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
         const sumupSecretKey = process.env.SUMUP_SECRET_KEY
 
         if (!sumupSecretKey) {
@@ -157,7 +157,7 @@ export async function getActivePaymentInstrument(membershipId: string) {
             throw new Error('Unauthorized action on this membership.')
         }
 
-        const customerId = `eeis-m-${membershipId}`
+        const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
         const sumupSecretKey = process.env.SUMUP_SECRET_KEY
 
         if (!sumupSecretKey) {
@@ -240,7 +240,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
             throw new Error('SumUp API keys or Merchant Code are not configured on the server.')
         }
 
-        const customerId = `m${membershipId.replace(/-/g, '').slice(0, 31)}` // Max 32 chars
+        const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
 
         // Ensure customer exists in SumUp system
         await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
@@ -308,7 +308,7 @@ export async function finalizeCardUpdate(membershipId: string) {
             throw new Error('Unauthorized action on this membership.')
         }
 
-        const customerId = `eeis-m-${membershipId}`
+        const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
         const sumupSecretKey = process.env.SUMUP_SECRET_KEY
 
         if (!sumupSecretKey) {
@@ -369,7 +369,7 @@ export async function finalizeCardUpdate(membershipId: string) {
  * Ensures a customer exists in SumUp for card tokenization.
  */
 async function ensureSumUpCustomer(supabase: any, user: any, membershipId: string, sumupSecretKey: string) {
-    const customerId = `m${membershipId.replace(/-/g, '').slice(0, 31)}`
+    const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
     
     // First check if customer exists
     const checkRes = await fetch(`https://api.sumup.com/v0.1/customers/${customerId}`, {
@@ -388,7 +388,7 @@ async function ensureSumUpCustomer(supabase: any, user: any, membershipId: strin
             .single()
 
         // Create the customer if they don't exist
-        await fetch('https://api.sumup.com/v0.1/customers', {
+        const createRes = await fetch('https://api.sumup.com/v0.1/customers', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${sumupSecretKey}`,
@@ -399,10 +399,15 @@ async function ensureSumUpCustomer(supabase: any, user: any, membershipId: strin
                 personal_details: {
                     first_name: membership?.first_name || 'Member',
                     last_name: membership?.last_name || 'EEIS',
-                    email: membership?.email || user.email || 'madrasah@eeis.co.uk'
+                    email: (membership?.email || user.email || 'madrasah@eeis.co.uk').trim().toLowerCase()
                 }
             })
         })
+
+        if (!createRes.ok) {
+            const err = await createRes.json()
+            console.error('SumUp Customer Creation Error:', err)
+        }
     }
 }
 
@@ -447,7 +452,7 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
             currency: 'GBP',
             merchant_code: merchantCode,
             description: `Annual Membership Fee - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
-            customer_id: `m${membershipId.replace(/-/g, '').slice(0, 31)}`,
+            customer_id: `m${membershipId.replace(/-/g, '')}`.slice(0, 32),
             purpose: 'SETUP_RECURRING_PAYMENT'
         }
 
