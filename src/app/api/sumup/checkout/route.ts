@@ -66,7 +66,8 @@ export async function POST(request: Request) {
 
         if (isRecurring) {
             sumupPayload.customer_id = customerId;
-            sumupPayload.purpose = 'SETUP_RECURRING_PAYMENT';
+            // No SETUP_RECURRING_PAYMENT purpose for live charges.
+            // SumUp will tokenize the card automatically because customer_id is provided.
         }
 
         const response = await fetch('https://api.sumup.com/v0.1/checkouts', {

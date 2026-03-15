@@ -453,14 +453,16 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://eeis.co.uk'
         const returnUrl = `${baseUrl}/dashboard/payments?status=callback`
 
+        const customerId = `m${membershipId.replace(/-/g, '')}`.slice(0, 32)
+
         const sumupPayload = {
             checkout_reference: checkoutReference,
             amount: Number(amount.toFixed(2)),
             currency: 'GBP',
             merchant_code: merchantCode,
             description: `EEIS Membership - ${membership.first_name} ${membership.last_name}`.slice(0, 255),
-            customer_id: `m${membershipId.replace(/-/g, '')}`.slice(0, 32),
-            purpose: 'SETUP_RECURRING_PAYMENT',
+            customer_id: customerId, // Using the validated customerId variable
+            // Removed purpose: 'SETUP_RECURRING_PAYMENT' to allow for a live charge + card save.
             return_url: returnUrl,
             redirect_url: returnUrl
         }
