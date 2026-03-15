@@ -6,7 +6,7 @@ import Script from 'next/script'
 
 type SumUpCheckoutProps = {
     checkoutId: string
-    onComplete: (status: 'SUCCESS' | 'FAILED', transactionId?: string) => void
+    onComplete: (status: 'SUCCESS' | 'FAILED', transactionId?: string, errorMessage?: string) => void
 }
 
 export default function SumUpCheckoutWidget({ checkoutId, onComplete }: SumUpCheckoutProps) {
@@ -32,15 +32,16 @@ export default function SumUpCheckoutWidget({ checkoutId, onComplete }: SumUpChe
                             if (type === 'success' || body?.status === 'PAID') {
                                 onComplete('SUCCESS', body?.transaction_code as string | undefined)
                             } else {
-                                onComplete('FAILED')
                                 let errorMessage = 'Payment failed or was cancelled. Please try again.'
                                 if (body?.message) {
                                     errorMessage = `Payment declined: ${body.message}`
                                 } else if (body?.transaction_code) {
                                     errorMessage = `Payment failed (Ref: ${body.transaction_code}).`
-                                } else if (type) {
+                                } else if (type && type !== 'error') {
                                     errorMessage = `Payment failed (Type: ${type}). Please try again.`
                                 }
+                                
+                                onComplete('FAILED', undefined, errorMessage)
                                 setError(errorMessage)
                             }
                         },

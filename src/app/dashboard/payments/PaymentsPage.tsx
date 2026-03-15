@@ -40,14 +40,6 @@ export default function PaymentsPage({
 
     const totalFee = baseFee + (dependentCount * 5.00)
 
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('pay') === 'true' && (membershipStatus === 'pending_payment' || membershipStatus === 'pending' || membershipStatus === 'approved')) {
-            startPayment();
-        } else if (urlParams.get('update') === 'true') {
-            startUpdate();
-        }
-    }, [membershipStatus]); // Added membershipStatus to dependency array
 
     const formatCardBrand = (brand: string) => {
         if (!brand) return 'Card'
@@ -159,6 +151,14 @@ export default function PaymentsPage({
             setMode(null)
         }
     }
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('pay') === 'true' && (membershipStatus === 'pending_payment' || membershipStatus === 'pending' || membershipStatus === 'approved')) {
+            startPayment();
+        } else if (urlParams.get('update') === 'true') {
+            startUpdate();
+        }
+    }, [membershipStatus, membershipId]);
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 p-4 md:p-8">
@@ -412,12 +412,12 @@ export default function PaymentsPage({
                         <div className="p-8 pb-12">
                             <SumUpCheckoutWidget 
                                 checkoutId={paymentCheckoutId} 
-                                onComplete={(status, transId) => {
+                                onComplete={(status, transId, errMsg) => {
                                     if (status === 'SUCCESS') {
                                         handleFinalSuccess(transId || 'unknown')
                                     } else {
                                         setPaymentStatus('error')
-                                        setPaymentMessage('Payment was cancelled or failed.')
+                                        setPaymentMessage(errMsg || 'Payment was cancelled or failed.')
                                         setPaymentCheckoutId(null)
                                     }
                                 }}
