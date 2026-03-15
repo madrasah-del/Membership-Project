@@ -242,13 +242,16 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
 
         const customerId = `eeis-m-${membershipId}`
 
+        // Ensure customer exists in SumUp system
+        await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
+
         // Generate a unique checkout reference for the update
         const checkoutReference = `UPDATE-CHK-${membershipId}-${Date.now()}`
 
         // Payload for tokenization checkout (must have an amount, usually minimal for 3DS or handled internally)
         const sumupPayload: Record<string, unknown> = {
             checkout_reference: checkoutReference,
-            amount: 1, // Minimum amount required by SumUp API for checkout creation, though we don't plan to actually charge it if we can avoid it, but wait. Let's see if 0 is allowed for SETUP_RECURRING_PAYMENT. Actually, for card updates, £1 is standard for auth. We'll set it to 1, but we don't record this in our DB as a real payment.
+            amount: 1, // Minimum amount required by SumUp API for checkout creation
             currency: 'GBP',
             pay_to_email: user.email || process.env.NEXT_PUBLIC_SUMUP_MERCHANT_EMAIL || 'madrasah@eeis.co.uk',
             merchant_code: merchantCode,
@@ -270,7 +273,7 @@ export async function initializeCardUpdateCheckout(membershipId: string) {
 
         if (!response.ok) {
             console.error('SumUp API Error (Update Init):', data)
-            throw new Error('Failed to initialize connection to payment gateway.')
+            throw new Error(data?.message || 'Failed to initialize connection to payment gateway.')
         }
 
         return { checkoutId: data.id }
@@ -363,6 +366,47 @@ export async function finalizeCardUpdate(membershipId: string) {
 }
 
 /**
+ * Ensures a customer exists in SumUp for card tokenization.
+ */
+async function ensureSumUpCustomer(supabase: any, user: any, membershipId: string, sumupSecretKey: string) {
+    const customerId = `eeis-m-${membershipId}`
+    
+    // First check if customer exists
+    const checkRes = await fetch(`https://api.sumup.com/v0.1/customers/${customerId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${sumupSecretKey}`
+        }
+    })
+
+    if (!checkRes.ok) {
+        // Fetch membership details to get full name for customer creation
+        const { data: membership } = await supabase
+            .from('memberships')
+            .select('first_name, last_name, email')
+            .eq('id', membershipId)
+            .single()
+
+        // Create the customer if they don't exist
+        await fetch('https://api.sumup.com/v0.1/customers', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${sumupSecretKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                customer_id: customerId,
+                personal_details: {
+                    first_name: membership?.first_name || 'Member',
+                    last_name: membership?.last_name || 'EEIS',
+                    email: membership?.email || user.email || 'madrasah@eeis.co.uk'
+                }
+            })
+        })
+    }
+}
+
+/**
  * Initializes a full payment checkout for the annual membership fee.
  */
 export async function initializeMembershipPayment(membershipId: string, amount: number) {
@@ -391,6 +435,9 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
             throw new Error('SumUp API keys are not configured correctly.')
         }
 
+        // Ensure customer exists in SumUp system
+        await ensureSumUpCustomer(supabase, user, membershipId, sumupSecretKey)
+
         // Generate a unique checkout reference
         const checkoutReference = `MEM-DASH-${membershipId}-${Date.now()}`
 
@@ -416,13 +463,13 @@ export async function initializeMembershipPayment(membershipId: string, amount: 
         const data = await response.json()
         if (!response.ok) {
             console.error('SumUp API Error (Payment Init):', data)
-            throw new Error('Failed to initialize payment gateway.')
+            throw new Error(data?.message || 'Failed to initialize payment gateway.')
         }
 
         return { checkoutId: data.id }
 
     } catch (error: unknown) {
-        console.error('Payment Init Error:', error)
+        console.error('Payment Int Error:', error)
         return { error: error instanceof Error ? error.message : 'An unexpected error occurred during initialization.' }
     }
 }
